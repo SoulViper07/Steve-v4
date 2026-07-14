@@ -54,6 +54,9 @@ def print_help():
         "  /git-push [url]    Push to remote",
         "  /git-release <tag> Create and push a release tag",
         "",
+        "Planning:",
+        "  /plan <request>    Analyze a request and produce an execution plan",
+        "",
         "Other commands:",
         "  /run <cmd>         Run a shell command",
         "  /load <path>       Load files into context",
@@ -259,6 +262,17 @@ def cmd_run(command: str):
         _err(str(e))
 
 
+def cmd_plan(request: str):
+    from pathlib import Path
+    workdir = Path.cwd().resolve()
+    engine = PlanningEngine(workdir)
+    plan = engine.plan(request)
+    if plan:
+        _ok(f"Plan [{plan.task_id}] saved to .steve/plans/{plan.task_id}/")
+    else:
+        _err("Planning failed.")
+
+
 def main():
     workdir = Path.cwd().resolve()
     p = argparse.ArgumentParser(description=f"{STEVE_NAME} v{AGENT_VERSION}")
@@ -339,6 +353,8 @@ def main():
                 cmd_run(arg)
             elif cmd == "reset":
                 _ok("Conversation reset.")
+            elif cmd == "plan":
+                cmd_plan(arg)
             elif cmd in ("ls",):
                 try:
                     target = Path(arg).resolve() if arg else workdir

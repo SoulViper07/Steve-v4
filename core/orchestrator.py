@@ -20,6 +20,7 @@ from verifier.base_verifier import (
     quality_review, VerificationReport,
 )
 from actions.executor import FilesystemExecutor
+from planner import PlanningEngine
 from ui.terminal_renderer import (
     console, _plain_terminal, _rich_terminal, _clean_mode,
     _info, _ok, _err, _warn, _step, WormLoader, TimedActivity,
@@ -43,8 +44,21 @@ def run_pipeline(
     category = classify_task(user_input)
     pipeline.add("📋", f"Categorizing: {category}", "step")
 
-    # ── Stage 1: Planning ──
-    pipeline.add("📐", "Planning stage: qwen3:14b", "step")
+    # ── Stage 1: High-Level Planning ──
+    planning_engine = PlanningEngine(workdir)
+    complete_plan = planning_engine.plan(user_input)
+    if complete_plan:
+        cl = complete_plan.classification
+        pipeline.add("  ✓", f"{cl.project_type} / {cl.complexity} / {cl.category}", "ok")
+        if complete_plan.architecture.components:
+            pipeline.add("  ✓", f"{len(complete_plan.architecture.components)} components, {len(complete_plan.architecture.folder_structure)} files", "ok")
+        if complete_plan.features.features:
+            pipeline.add("  ✓", f"{len(complete_plan.features.features)} features planned", "ok")
+        if complete_plan.execution.steps:
+            pipeline.add("  ✓", f"{complete_plan.execution.total_steps} execution steps", "ok")
+
+    # ── Stage 2: Detailed Planning ──
+    pipeline.add("📐", "Detailed breakdown: qwen3:14b", "step")
     planner = Planner(workdir, memory)
     plan_dict, exec_plan = planner.plan(user_input)
     pipeline.add("  ✓", "Architecture planned", "ok")
