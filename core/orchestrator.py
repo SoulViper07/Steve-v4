@@ -21,6 +21,7 @@ from verifier.base_verifier import (
 )
 from actions.executor import FilesystemExecutor
 from planner import PlanningEngine
+from state import get_state_manager
 from ui.terminal_renderer import (
     console, _plain_terminal, _rich_terminal, _clean_mode,
     _info, _ok, _err, _warn, _step, WormLoader, TimedActivity,
@@ -38,31 +39,52 @@ def run_pipeline(
     start_time = time.monotonic()
     workdir = conv.workdir if hasattr(conv, 'workdir') else Path.cwd()
     memory = ProjectMemory(workdir)
+    sm = get_state_manager(workdir)
+    sm.clear()
 
     pipeline.add("🧠", "Understanding request...", "step")
 
     category = classify_task(user_input)
     pipeline.add("📋", f"Categorizing: {category}", "step")
 
+    sm.initialize_task(user_input, task_id="", category=category)
+
     # ── Stage 1: High-Level Planning ──
-    planning_engine = PlanningEngine(workdir)
+    sm.start_stage("plan")
+    planning_engine = PlanningEngine(workdir, state_manager=sm)
     complete_plan = planning_engine.plan(user_input)
     if complete_plan:
         cl = complete_plan.classification
+        sm.update_task_classification(
+            project_type=cl.project_type,
+            complexity=cl.complexity,
+            category=cl.category,
+            languages=cl.languages,
+            frameworks=cl.frameworks,
+        )
         pipeline.add("  ✓", f"{cl.project_type} / {cl.complexity} / {cl.category}", "ok")
         if complete_plan.architecture.components:
+            sm.update_architecture(
+                components=complete_plan.architecture.components,
+                folder_structure=complete_plan.architecture.folder_structure,
+                summary=complete_plan.architecture.data_flow_summary,
+            )
             pipeline.add("  ✓", f"{len(complete_plan.architecture.components)} components, {len(complete_plan.architecture.folder_structure)} files", "ok")
         if complete_plan.features.features:
             pipeline.add("  ✓", f"{len(complete_plan.features.features)} features planned", "ok")
         if complete_plan.execution.steps:
             pipeline.add("  ✓", f"{complete_plan.execution.total_steps} execution steps", "ok")
+    sm.finish_stage("plan")
 
     # ── Stage 2: Detailed Planning ──
+    sm.start_stage("detailed_planning")
     pipeline.add("📐", "Detailed breakdown: qwen3:14b", "step")
     planner = Planner(workdir, memory)
     plan_dict, exec_plan = planner.plan(user_input)
+    sm.set_project(exec_plan.project_root)
     pipeline.add("  ✓", "Architecture planned", "ok")
     pipeline.add("  ✓", f"Files: {', '.join(exec_plan.required_files[:5])}", "ok")
+    sm.finish_stage("detailed_planning")
 
     files_to_generate = {f: [] for f in exec_plan.required_files}
     components = plan_dict.get("component_breakdown", "")
@@ -102,12 +124,14 @@ def run_pipeline(
     pipeline.add("  ✓", f"{sum(len(v) for v in files_to_generate.values())} components identified", "ok")
     pipeline.add_decision(f"Architecture: {plan_dict.get('architecture', 'N/A')[:80]}")
 
-    # ── Stage 2: Visual Identity / UI Design ──
+    # ── Stage 3: Visual Identity / UI Design ──
+    sm.start_stage("design")
     project_name = exec_plan.project_root or "project"
     is_frontend = any(f.endswith((".html", ".css", ".js")) for f in exec_plan.required_files)
 
     if is_frontend:
         pipeline.add("🎨", "Designing UI: mistral-small", "step")
+        sm.set_model("mistral-small:latest", stage="design", reason="UI design")
         visual_identity = _generate_visual_identity(user_input, "balanced")
         pipeline.add("  ✓", f"Palette: {list(visual_identity.palette.values())[:4]}", "ok")
         pipeline.add("  ✓", f"Typography: {visual_identity.typography}", "ok")
@@ -130,8 +154,11 @@ def run_pipeline(
             memory.save_all()
     else:
         visual_identity = None
+    sm.finish_stage("design")
 
-    # ── Stage 3: Incremental Implementation ──
+    # ── Stage 4: Incremental Implementation ──
+    sm.start_stage("implement")
+    sm.set_model("qwen2.5-coder:14b", stage="implement", reason="Code generation")
     pipeline.add("💻", "Implementing: qwen2.5-coder:14b", "step")
     pipeline.start_progress(sum(len(v) for v in files_to_generate.values()), "Sections")
 
@@ -147,10 +174,14 @@ def run_pipeline(
 
     for file_path, sections in files_to_generate.items():
         section_count += len(sections)
+        sm.set_file(file_path)
         pipeline.update_progress(section_count, f"Building {file_path}")
         ok = file_builder.build_file(file_path, sections, design_context, pipeline)
-        if not ok:
+        if ok:
+            sm.mark_generated(file_path)
+        else:
             build_ok = False
+            sm.add_warning(f"Partial failure in {file_path}")
             pipeline.add("  ⚠", f"Partial failure in {file_path}", "warn")
 
     pipeline.stop_progress()
@@ -159,8 +190,10 @@ def run_pipeline(
         pipeline.add("✅", "All files generated successfully", "ok")
     else:
         pipeline.add("⚠", "Some files had generation issues", "warn")
+    sm.finish_stage("implement")
 
-    # ── Stage 4: Verification ──
+    # ── Stage 5: Verification ──
+    sm.start_stage("verify")
     pipeline.add("🔍", "Verifying implementation...", "step")
 
     file_contents = {}
@@ -173,6 +206,7 @@ def run_pipeline(
     existence = verify_expected_files(workdir, exec_plan.required_files)
     if existence.critical_count > 0:
         ver_report = existence
+        sm.update_verification(critical=existence.critical_count, issues=[{"severity": i.severity, "category": i.category, "message": i.message} for i in existence.issues])
         for iss in existence.issues:
             pipeline.verify("Structure", iss.severity, iss.message)
 
@@ -184,10 +218,13 @@ def run_pipeline(
         ver_report = web
 
     if ver_report.passed:
+        sm.mark_verified("passed", 1.0)
         pipeline.add("  ✅", "Verification passed", "ok")
     elif ver_report.critical_count > 0:
+        sm.mark_verified("failed")
         pipeline.add("  ❌", f"{ver_report.critical_count} critical issues found", "err")
     else:
+        sm.mark_verified("partial")
         pipeline.add("  ⚠", f"Non-critical issues: {ver_report.major_count} major, {ver_report.minor_count} minor", "warn")
 
     if memory:
@@ -199,17 +236,21 @@ def run_pipeline(
             "issues": [(i.severity, i.category, i.message) for i in ver_report.issues],
         })
         memory.save_all()
+    sm.finish_stage("verify")
 
-    # ── Stage 5: Quality Review ──
+    # ── Stage 6: Quality Review ──
+    sm.start_stage("quality")
     if is_frontend:
         pipeline.add("⭐", "Performing quality review...", "step")
         qr = quality_review(workdir, file_contents)
+        sm.update_verification(quality=qr.score)
         pipeline.add(f"  📊", f"Quality score: {qr.score:.2f}", "info")
         for iss in qr.issues:
             level = "ok" if iss.severity == "cosmetic" else ("warn" if iss.severity == "minor" else "err")
             pipeline.verify(f"[{iss.severity}] {iss.category}", level, iss.message)
 
         if qr.score < 0.5 and qr.critical_count == 0:
+            sm.mark_repaired(attempt=1, success=False)
             pipeline.add("🔄", f"Quality below threshold ({qr.score:.2f}), performing refinement pass...", "warn")
             pipeline.start_progress(3, "Refinement")
 
@@ -225,9 +266,13 @@ def run_pipeline(
                 file_builder.build_file(rf, rs, design_context, pipeline)
 
             pipeline.stop_progress()
+            sm.mark_repaired(attempt=1, success=True)
             pipeline.add("✅", "Refinement complete", "ok")
 
-    # ── Stage 6: Completion ──
+    sm.finish_stage("quality")
+
+    # ── Stage 7: Completion ──
+    sm.finish_task()
     elapsed = time.monotonic() - start_time
     mins = int(elapsed // 60)
     secs = int(elapsed % 60)

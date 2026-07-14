@@ -17,14 +17,16 @@ from .architecture_planner import plan_architecture
 from .ui_planner import plan_ui
 from .feature_planner import plan_features
 from ._llm import is_qwen_available
+from state import get_state_manager
 from ui.terminal_renderer import _info, _ok, _err, _step, _warn
 
 
 class PlanningEngine:
-    def __init__(self, workdir: Path):
+    def __init__(self, workdir: Path, state_manager=None):
         self.workdir = workdir
         self.plans_dir = workdir / ".steve" / "plans"
         self.plans_dir.mkdir(parents=True, exist_ok=True)
+        self._sm = state_manager or get_state_manager(workdir)
 
     def plan(self, request: str) -> Optional[CompletePlan]:
         if not is_qwen_available():
@@ -38,11 +40,23 @@ class PlanningEngine:
         if not classification:
             _err("Failed to classify task.")
             return None
+        self._sm.update_task_classification(
+            project_type=classification.project_type,
+            complexity=classification.complexity,
+            category=classification.category,
+            languages=classification.languages,
+            frameworks=classification.frameworks,
+        )
         _ok(f"{classification.project_type} / {classification.complexity} / {classification.category}")
 
         _step("Planning architecture...")
         architecture = plan_architecture(request, classification)
         if architecture:
+            self._sm.update_architecture(
+                components=architecture.components,
+                folder_structure=architecture.folder_structure,
+                summary=architecture.data_flow_summary,
+            )
             comp_count = len(architecture.components)
             file_count = len(architecture.folder_structure)
             _ok(f"{comp_count} components, {file_count} files")
@@ -75,6 +89,7 @@ class PlanningEngine:
         )
 
         plan.save(self.plans_dir)
+        self._sm.save()
         _ok("Plan completed.")
         return plan
 

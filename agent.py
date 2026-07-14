@@ -264,8 +264,11 @@ def cmd_run(command: str):
 
 def cmd_plan(request: str):
     from pathlib import Path
+    from state import get_state_manager
     workdir = Path.cwd().resolve()
-    engine = PlanningEngine(workdir)
+    sm = get_state_manager(workdir)
+    sm.initialize_task(request)
+    engine = PlanningEngine(workdir, state_manager=sm)
     plan = engine.plan(request)
     if plan:
         _ok(f"Plan [{plan.task_id}] saved to .steve/plans/{plan.task_id}/")

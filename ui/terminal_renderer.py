@@ -26,6 +26,7 @@ from utils.helpers import (
     get_symbol, strip_rich_markup
 )
 from config.settings import STEVE_NAME, PLAIN_UI, OUTPUT_MODE
+from state import get_state_manager
 
 def _build_console() -> Console:
     return Console(
@@ -177,10 +178,12 @@ class PipelineDisplay:
         self.state = PipelineState(start_time=time.monotonic())
         self.progress: Optional[ProgressBar] = None
         self._header_rendered = False
+        self._sm = get_state_manager()
 
     def add(self, icon: str, message: str, status: str = "info"):
         entry = PipelineEntry(timestamp=time.monotonic(), icon=icon, message=message, status=status)
         self.state.entries.append(entry)
+        self._sm.add_log(message)
 
     def add_decision(self, decision: str):
         self.state.decisions.append(decision)
@@ -191,14 +194,17 @@ class PipelineDisplay:
     def model_switch(self, model: str, reason: str = "", stage: str = ""):
         self.state.models.append(model)
         self.state.model_switches.append((model, reason, stage))
+        self._sm.set_model(model, stage, reason)
         self.add("🤖", f"Using {model}" + (f" for {stage}" if stage else ""), "step")
 
     def file_created(self, path: str):
         self.state.files_created.append(path)
+        self._sm.mark_generated(path)
         self.add("📄", f"Created {path}", "ok")
 
     def file_edited(self, path: str, summary: str = ""):
         self.state.files_edited.append((path, summary))
+        self._sm.mark_modified(path)
         msg = f"Edited {path}"
         if summary:
             msg += f"  # {summary}"
@@ -224,6 +230,10 @@ class PipelineDisplay:
     def git_activity(self, action: str, detail: str, ref: str = "", ok: bool = True):
         activity = GitActivity(action=action, detail=detail, ref=ref, ok=ok)
         self.state.git_activities.append(activity)
+        if action == "commit" and ok and ref:
+            self._sm.mark_committed(ref, detail)
+        if action == "checkpoint":
+            self._sm.git.checkpoints.append(ref) if ref else None
         icons = {
             "init": "🔧",
             "checkpoint": "💾",
