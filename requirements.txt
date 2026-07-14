@@ -1,2 +1,7 @@
+# Core dependencies
 requests>=2.28.0
 rich>=13.0.0
+
+# Python version requirement
+# Python 3.11+ recommended
+# pip install will not enforce this — check manually
