@@ -1,0 +1,82 @@
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environments
+.venv/
+venv/
+env/
+.env
+ENV/
+
+# Logs
+logs/
+*.log
+
+# Steve runtime
+.steve/
+steve_workspace/
+agent_verify_workspace/
+
+# Cache folders
+.cache/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Temporary files
+*.tmp
+*.bak
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Generated projects
+tmp/
+temp/
+.tmp/
+generated/
+scaffolds/
+output/
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+*.egg
+*.whl
+*.spec
+
+# IDE files
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+
+# Ollama model files
+models/
+ollama_models/
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+desktop.ini
+*.dll
+*.exe
+*.msi
+
+# Node (if accidentally installed)
+node_modules/
+package-lock.json
+yarn.lock
+
+# Coverage
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml

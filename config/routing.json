@@ -1,0 +1,129 @@
+{
+    "default_model": "qwen3:14b",
+    "creative_model": "mistral-small:latest",
+    "coding_model": "qwen2.5-coder:14b",
+    "repair_model": "qwen2.5-coder:14b",
+    "fast_model": "qwen2.5-coder:7b",
+
+    "task_categories": {
+        "Chat": {
+            "keywords": ["hello", "hi", "how are you", "what's up", "hey", "thanks", "thank you", "bye", "goodbye"],
+            "model": null,
+            "stages": []
+        },
+        "Programming": {
+            "keywords": ["code", "program", "function", "class", "implement", "write", "develop", "script"],
+            "model": null,
+            "stages": ["implement"]
+        },
+        "Frontend UI": {
+            "keywords": ["frontend", "ui", "ux", "html", "css", "javascript", "landing page", "dashboard", "website", "web app", "design", "layout", "visual", "component", "interface", "login page"],
+            "model": null,
+            "stages": ["frontend_creative", "implement"]
+        },
+        "Backend": {
+            "keywords": ["backend", "api", "server", "flask", "fastapi", "express", "route", "database", "db", "sql", "rest", "endpoint", "service"],
+            "model": null,
+            "stages": ["plan", "implement"]
+        },
+        "Bug Fix": {
+            "keywords": ["bug", "fix", "broken", "not working", "issue", "problem", "error", "wrong", "incorrect", "glitch"],
+            "model": null,
+            "stages": ["repair_strategy", "implement"]
+        },
+        "Debugging": {
+            "keywords": ["debug", "traceback", "stack trace", "exception", "crash", "why is", "why does", "fail", "failure", "trace"],
+            "model": null,
+            "stages": ["verifier_analysis"]
+        },
+        "Refactor": {
+            "keywords": ["refactor", "restructure", "reorganize", "clean up", "cleanup", "improve", "modernize", "redesign"],
+            "model": null,
+            "stages": ["plan", "implement"]
+        },
+        "Architecture": {
+            "keywords": ["architecture", "design pattern", "structure", "organize", "component architecture", "system design", "high-level", "overview"],
+            "model": null,
+            "stages": ["plan"]
+        },
+        "Documentation": {
+            "keywords": ["documentation", "docs", "readme", "comment", "docstring", "explain", "how to", "guide", "tutorial"],
+            "model": null,
+            "stages": ["implement"]
+        },
+        "Project Generation": {
+            "keywords": ["create project", "scaffold", "generate app", "new project", "bootstrap", "set up project", "create app", "make app", "build app", "full-stack", "full stack"],
+            "model": null,
+            "stages": ["plan", "frontend_creative", "implement", "verifier_analysis"]
+        },
+        "File Editing": {
+            "keywords": ["edit", "update", "modify", "change", "replace", "rewrite", "add to", "remove", "delete", "rename", "adjust", "tweak"],
+            "model": null,
+            "stages": ["implement"]
+        },
+        "Research": {
+            "keywords": ["research", "find", "look up", "search", "investigate", "analyze", "what is", "tell me about", "information"],
+            "model": null,
+            "stages": []
+        },
+        "Planning": {
+            "keywords": ["plan", "approach", "steps", "strategy", "outline", "how should", "what should", "roadmap", "milestone"],
+            "model": null,
+            "stages": ["plan"]
+        }
+    },
+
+    "stage_model_map": {
+        "plan": "default_model",
+        "architecture": "default_model",
+        "project_decomposition": "default_model",
+        "frontend_creative": "creative_model",
+        "visual_identity": "creative_model",
+        "animation_ideas": "creative_model",
+        "implement": "coding_model",
+        "code_gen": "coding_model",
+        "patch": "coding_model",
+        "structured_repair": "coding_model",
+        "repair_strategy": "repair_model",
+        "verifier_analysis": "default_model",
+        "small_edit": "fast_model",
+        "fast_fix": "fast_model",
+
+        "understanding_request": "default_model",
+        "planning": "default_model",
+        "planning_architecture": "default_model",
+        "designing_architecture": "default_model",
+        "designing_ui": "creative_model",
+        "generating_project": "coding_model",
+        "implementing": "coding_model",
+        "implementing_interactions": "coding_model",
+        "implementing_refactor": "coding_model",
+        "editing_file": "coding_model",
+        "generating_docs": "coding_model",
+        "analyzing": "default_model",
+        "analyzing_error": "default_model",
+        "repairing": "repair_model",
+        "verifying": "default_model",
+        "final_verification": "default_model",
+        "researching": "default_model",
+        "chat": "default_model",
+        "summary": "default_model",
+        "repair": "repair_model"
+    },
+
+    "execution_stages": {
+        "Chat": ["chat"],
+        "Programming": ["understanding_request", "planning", "implementing", "verifying"],
+        "Frontend UI": ["understanding_request", "planning_architecture", "designing_ui", "implementing", "verifying"],
+        "Backend": ["understanding_request", "planning_architecture", "implementing", "verifying"],
+        "Bug Fix": ["understanding_request", "analyzing", "repairing", "verifying"],
+        "Debugging": ["understanding_request", "analyzing_error", "verifying"],
+        "Refactor": ["understanding_request", "planning", "implementing_refactor", "verifying"],
+        "Architecture": ["understanding_request", "designing_architecture", "verifying"],
+        "Documentation": ["understanding_request", "generating_docs", "verifying"],
+        "Project Generation": ["understanding_request", "planning_architecture", "designing_ui", "generating_project", "implementing_interactions", "verifying", "repair", "final_verification", "summary"],
+        "File Editing": ["understanding_request", "editing_file", "verifying"],
+        "Research": ["researching"],
+        "Planning": ["understanding_request", "planning"]
+    }
+}
