@@ -39,6 +39,13 @@ def print_help():
         "  /help              Show this help",
         "  /exit, /quit       Exit",
         "",
+        "Router:",
+        "  /route <request>   Analyze and display model routing decisions",
+        "  /router-mode <m>   Set routing mode (performance|quality|balanced)",
+        "  /router-always <m>  Always use a specific model for all stages",
+        "  /router-prefer <m>  Prefer a specific model when capabilities match",
+        "  /router-disable <m> Disable a specific model from routing",
+        "",
         "Git commands:",
         "  /git-status        Show repository status",
         "  /git-init          Initialize a Git repository",
@@ -54,8 +61,9 @@ def print_help():
         "  /git-push [url]    Push to remote",
         "  /git-release <tag> Create and push a release tag",
         "",
-        "Planning:",
+        "Planning & Routing:",
         "  /plan <request>    Analyze a request and produce an execution plan",
+        "  /route <request>   Show routing decisions for a request",
         "",
         "Other commands:",
         "  /run <cmd>         Run a shell command",
@@ -276,6 +284,16 @@ def cmd_plan(request: str):
         _err("Planning failed.")
 
 
+def cmd_route(request: str):
+    from router import get_router, route_task
+    pipeline = route_task(request)
+    if pipeline and pipeline.steps:
+        _ok(f"Routing completed: {pipeline.total_steps} stage(s)")
+    else:
+        _err("Routing failed.")
+    _info("Override with: always_use=<model>, prefer=<model>, disabled=<model>, mode=performance|quality|balanced")
+
+
 def main():
     workdir = Path.cwd().resolve()
     p = argparse.ArgumentParser(description=f"{STEVE_NAME} v{AGENT_VERSION}")
@@ -358,6 +376,24 @@ def main():
                 _ok("Conversation reset.")
             elif cmd == "plan":
                 cmd_plan(arg)
+            elif cmd == "router-mode":
+                from router import set_mode
+                set_mode(arg) if arg else _err("Mode required (performance|quality|balanced)")
+                _ok(f"Router mode set to: {arg}")
+            elif cmd == "router-always":
+                from router import set_always_use
+                set_always_use(arg) if arg else _err("Model name required")
+                _ok(f"Always using model: {arg}")
+            elif cmd == "router-prefer":
+                from router import set_prefer
+                set_prefer(arg) if arg else _err("Model name required")
+                _ok(f"Preferring model: {arg}")
+            elif cmd == "router-disable":
+                from router import disable_model
+                disable_model(arg) if arg else _err("Model name required")
+                _ok(f"Disabled model: {arg}")
+            elif cmd in ("route", "router"):
+                cmd_route(arg)
             elif cmd in ("ls",):
                 try:
                     target = Path(arg).resolve() if arg else workdir

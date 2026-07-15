@@ -1,0 +1,75 @@
+from .capabilities import (
+    CAPABILITY_TAXONOMY, STAGE_CAPABILITIES, STAGE_ROLES,
+    TASK_CATEGORY_CAPABILITIES,
+    get_capability_label, get_stage_capabilities, get_stage_role,
+    get_category_capabilities, describe_capabilities,
+)
+from .model_profiles import (
+    ModelProfile, get_profile, get_profile_by_short_name,
+    register_model, all_profiles, enabled_profiles,
+    find_models_for_capability, find_models_for_capabilities,
+    match_models_for_stage, disable_model, enable_model, reset_profiles,
+)
+from .routing_rules import (
+    RoutingOverrides, RoutingRule, RoutingContext,
+    resolve_model, resolve_pipeline,
+    load_overrides_from_env, apply_overrides,
+    set_always_use, set_prefer, set_mode, clear_overrides,
+    register_rule,
+)
+from .performance import (
+    PerformanceTracker, ModelPerformanceEntry, ModelPerformanceStats,
+    get_tracker, reset_tracker,
+)
+from .model_router import (
+    IntelligentRouter, ExecutionPipeline, RouteStep,
+    get_router, reset_router, route_task,
+)
+
+
+__all__ = [
+    "CAPABILITY_TAXONOMY",
+    "STAGE_CAPABILITIES",
+    "STAGE_ROLES",
+    "TASK_CATEGORY_CAPABILITIES",
+    "get_capability_label",
+    "get_stage_capabilities",
+    "get_stage_role",
+    "get_category_capabilities",
+    "describe_capabilities",
+    "ModelProfile",
+    "get_profile",
+    "get_profile_by_short_name",
+    "register_model",
+    "all_profiles",
+    "enabled_profiles",
+    "find_models_for_capability",
+    "find_models_for_capabilities",
+    "match_models_for_stage",
+    "disable_model",
+    "enable_model",
+    "reset_profiles",
+    "RoutingOverrides",
+    "RoutingRule",
+    "RoutingContext",
+    "resolve_model",
+    "resolve_pipeline",
+    "load_overrides_from_env",
+    "apply_overrides",
+    "set_always_use",
+    "set_prefer",
+    "set_mode",
+    "clear_overrides",
+    "register_rule",
+    "PerformanceTracker",
+    "ModelPerformanceEntry",
+    "ModelPerformanceStats",
+    "get_tracker",
+    "reset_tracker",
+    "IntelligentRouter",
+    "ExecutionPipeline",
+    "RouteStep",
+    "get_router",
+    "reset_router",
+    "route_task",
+]

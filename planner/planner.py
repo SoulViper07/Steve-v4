@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Optional, Dict
 import uuid
 import time
 from pathlib import Path
@@ -19,6 +19,7 @@ from .feature_planner import plan_features
 from ._llm import is_qwen_available
 from state import get_state_manager
 from ui.terminal_renderer import _info, _ok, _err, _step, _warn
+from router import IntelligentRouter, RoutingOverrides, get_router
 
 
 class PlanningEngine:
@@ -98,53 +99,69 @@ class PlanningEngine:
         classification: TaskClassification,
         features: Optional[FeaturePlan],
     ) -> ExecutionRoadmap:
+        router = get_router(self.workdir)
+        model_recs = features.model_recommendations if features else {}
+        category = classification.category or "Programming"
+
+        router_pipeline = router.build_pipeline(
+            request=classification.description or "",
+            category=category,
+            planner_recommendations=model_recs,
+        )
+
         steps = []
         order = 0
+        stage_descriptions = {
+            "plan": "Plan architecture and design",
+            "architecture": "Design system architecture",
+            "project_decomposition": "Decompose project into components",
+            "frontend_creative": "Generate visual identity and UI design",
+            "visual_identity": "Design visual identity and design language",
+            "designing_ui": "Design user interface and experience",
+            "implement": "Implement all project files",
+            "code_gen": "Generate code from specifications",
+            "implementing": "Build implementation",
+            "implementing_refactor": "Refactor existing code",
+            "implementing_interactions": "Implement interactive features",
+            "generating_project": "Generate project scaffold and files",
+            "generating_docs": "Generate documentation",
+            "verify": "Verify correctness and quality",
+            "verifying": "Verify file existence, content, and functionality",
+            "verifier_analysis": "Analyze verification results",
+            "repair": "Fix issues found during verification",
+            "repairing": "Repair and fix defects",
+            "repair_strategy": "Plan repair approach",
+            "small_edit": "Apply targeted edit",
+            "fast_fix": "Apply quick fix",
+            "editing_file": "Edit source file",
+            "analyzing": "Analyze problem and identify root cause",
+            "analyzing_error": "Analyze error and traceback",
+            "designing_architecture": "Design system architecture",
+            "understanding_request": "Analyze and understand request",
+            "planning": "Plan execution approach",
+            "chat": "Engage in conversation",
+            "researching": "Research and gather information",
+            "summary": "Summarize completed work",
+            "quality": "Perform quality review and refinement",
+        }
 
-        steps.append(ExecutionStep(
-            order=order, stage="plan", description="Plan architecture and design",
-            model="qwen3:14b", estimated_calls=1,
-        ))
-        order += 1
-
-        is_frontend = classification.frontend or classification.full_stack
-        is_backend = classification.backend or classification.full_stack
-
-        if is_frontend:
+        for route_step in router_pipeline.steps:
+            desc = stage_descriptions.get(route_step.stage, f"Execute {route_step.stage}")
             steps.append(ExecutionStep(
-                order=order, stage="design",
-                description="Generate visual identity and UI design",
-                model="mistral-small:latest", estimated_calls=1,
+                order=order,
+                stage=route_step.stage,
+                description=desc,
+                model=route_step.model,
+                estimated_calls=3 if route_step.stage in ("implement", "implementing", "generating_project", "code_gen") else 1,
             ))
             order += 1
 
-        steps.append(ExecutionStep(
-            order=order, stage="implement",
-            description=("Implement all project files" if is_frontend else "Implement backend code"),
-            model="qwen2.5-coder:14b", estimated_calls=3,
-        ))
-        order += 1
-
-        steps.append(ExecutionStep(
-            order=order, stage="verify",
-            description="Verify file existence, content quality, and functionality",
-            model="qwen3:14b", estimated_calls=1,
-        ))
-        order += 1
-
-        steps.append(ExecutionStep(
-            order=order, stage="repair",
-            description="Fix any issues found during verification (if needed)",
-            model="qwen2.5-coder:14b", estimated_calls=2,
-        ))
-        order += 1
-
-        steps.append(ExecutionStep(
-            order=order, stage="quality",
-            description="Perform quality review and refinement pass",
-            model="qwen3:14b", estimated_calls=1,
-        ))
-        order += 1
+        if not steps:
+            steps.append(ExecutionStep(
+                order=0, stage="implement",
+                description="Implement based on plan",
+                model="qwen2.5-coder:14b", estimated_calls=3,
+            ))
 
         return ExecutionRoadmap(steps=steps)
 
