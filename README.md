@@ -2,30 +2,23 @@
 
 **Next-generation autonomous coding assistant — locally-powered, privacy-first, pipeline-driven.**
 
-Steve v4 is a conversational-first AI coding agent that inspects, plans, generates, verifies, and repairs software projects through a multi-model pipeline. Every stage is routed to the optimal model for the task. Git is a first-class subsystem — auto-initialized, checkpointed before every task, and automatically committed after successful verification.
+Steve v4 is a conversational-first AI coding agent that inspects, plans, generates, verifies, and repairs software projects through a multi-model pipeline. Every stage is routed to the optimal model via intelligent capability-based selection. Git is a first-class subsystem — auto-initialized, checkpointed before every task, and automatically committed after successful verification.
 
 ---
 
 ## Vision
 
-A locally-run, privacy-preserving, autonomous pair programmer that does not just chat about code, but understands your project, plans changes, writes files, verifies correctness, repairs failures, and commits results — all while keeping you in the loop through a clean terminal UI.
+A locally-run, privacy-preserving, autonomous pair programmer that does not just chat about code, but understands your project, plans changes, writes files, verifies correctness, repairs failures, and commits results — all while keeping you in the loop through a clean terminal UI with live streaming output.
 
 Steve v4 delivers on that vision by making every subsystem a first-class citizen with a clear API and single responsibility.
 
 ---
 
-## Steve v3 → Steve v4 Evolution
+## Latest Milestone: Streaming Generation Engine
 
-| Aspect | Steve v3 | Steve v4 |
-|--------|----------|----------|
-| **Architecture** | Monolithic → modular (refactored) | Clean 14-layer pipeline designed from scratch |
-| **Git** | Optional slash commands | First-class subsystem: auto-init, checkpoint, auto-commit, rollback, undo, branches |
-| **Pipeline** | 6-stage project generation pipeline | 14-layer model-routed pipeline with explicit stage transitions |
-| **Repair** | Implicit section retries | Dedicated `RepairEngine` with strategy selection and retry logic |
-| **File Generation** | Hardcoded HTML/CSS/JS sections | Generic section-based generation supporting any file type |
-| **Model Routing** | Keyword-based task classification | Stage-aware model router with fallback chains |
-| **Conversation** | Tightly coupled to planner and inspector | Pure message store with separated concerns |
-| **Codebase** | 8K-line legacy + 4K-line modular | Clean-slate modular (~5K lines, 45 files) |
+**v4.0.0-alpha.3** — Live streaming generation with real-time progress display.
+
+Steve no longer freezes while generating files. Tokens stream to the terminal in real-time as each file section is generated. Every operation — file creation, modification, patching — is displayed with clear indicators. The StateManager updates continuously throughout the process.
 
 ---
 
@@ -34,8 +27,10 @@ Steve v4 delivers on that vision by making every subsystem a first-class citizen
 - **Conversational-first** — chat, explain, debug, plan, and brainstorm in natural language. No action tags needed for discussion.
 - **Autonomous action** — build, create, fix, refactor, and generate projects via action tags. Infer operational intent automatically.
 - **Git as backbone** — auto-initialize repo, checkpoint before every task, auto-commit on verification pass, rollback, undo, branch management. 13 Git commands available.
-- **Multi-model pipeline** — routes each pipeline stage to the optimal model (Qwen3:14b, Mistral-Small, Qwen2.5-Coder:14b, Qwen2.5-Coder:7b).
-- **Planned architecture** — 14-layer pipeline with conversation manager, task analyzer, planner, architecture planner, model router, UI designer, implementation engine, streaming generator, file writer, verifier, repair engine, quality reviewer, and final report.
+- **Intelligent model routing** — capability-based model selection across 6 models. Three routing modes (quality, performance, balanced). Configurable overrides. Performance tracking and feedback.
+- **Live streaming generation** — real-time token display during file generation. Per-section progress with timing. Never appears frozen.
+- **Multi-model pipeline** — routes each pipeline stage to the optimal model via capability matching (Qwen3:14b, Qwen2.5-Coder, Mistral-Small, Llama3, Deepseek-Coder).
+- **Planned architecture** — modular pipeline with conversation manager, task analyzer, planner, architecture planner, model router, UI designer, implementation engine, streaming generator, file writer, verifier, repair engine, quality reviewer, and final report.
 - **Incremental file generation** — section-by-section code building with retry logic and memory persistence.
 - **Visual identity generation** — design systems with palettes, typography, layout archetypes, and animation systems.
 - **Project verification** — file existence, syntax checks, quality scoring, and refinement triggers.
@@ -45,7 +40,7 @@ Steve v4 delivers on that vision by making every subsystem a first-class citizen
 
 ---
 
-## Planned Architecture
+## Architecture
 
 ```
 ┌───────────────────────────────────────────────────────────┐
@@ -59,13 +54,13 @@ Steve v4 delivers on that vision by making every subsystem a first-class citizen
 │         Intent classification, operational detection       │
 ├───────────────────────────────────────────────────────────┤
 │                    Planner (Qwen3:14b)                      │
-│         Structured plan generation, quality profiles       │
+│     4 sub-planners: task, architecture, UI, features       │
 ├───────────────────────────────────────────────────────────┤
 │                   Architecture Planner                     │
 │         Component tree, file map, dependency analysis      │
 ├───────────────────────────────────────────────────────────┤
 │                      Model Router                          │
-│         Stage-to-model mapping, fallback chains, warm-up   │
+│    Capability-based routing, 6 profiles, 3 modes, overrides│
 ├───────────────────────────────────────────────────────────┤
 │               UI Designer (Mistral-Small)                   │
 │      Visual identity, layout archetypes, design tokens     │
@@ -74,7 +69,7 @@ Steve v4 delivers on that vision by making every subsystem a first-class citizen
 │          Code generation, patching, file creation          │
 ├───────────────────────────────────────────────────────────┤
 │                   Streaming Generator                      │
-│        Token stream → chunked output, progress events      │
+│     Token stream → chunked output, live progress display   │
 ├───────────────────────────────────────────────────────────┤
 │                      File Writer                           │
 │       Action tag parser, file I/O, backup, boundaries      │
@@ -92,6 +87,28 @@ Steve v4 delivers on that vision by making every subsystem a first-class citizen
 │    Summary, file list, timing, model usage, Git activity   │
 └───────────────────────────────────────────────────────────┘
 ```
+
+---
+
+## Module Status
+
+| Module | Status | Description |
+|--------|--------|-------------|
+| `config/` | ✓ Stable | Settings, model config, routing rules |
+| `core/` | ✓ Stable | Pipeline, planner, conversation, file context |
+| `state/` | ✓ Stable | StateManager — 6 sub-states, JSON persistence |
+| `planner/` | ✓ Stable | 4 sub-planners, structured CompletePlan |
+| `router/` | ✓ Stable | IntelligentRouter, 6 profiles, capability matching |
+| `streaming/` | ✓ New | Live token streaming, progress tracking, real-time display |
+| `providers/` | ✓ Stable | Ollama API client (streaming, warming) |
+| `actions/` | ✓ Stable | Action tag parser/executor |
+| `ui/` | ✓ Stable | Terminal renderer (Rich/ASCII) |
+| `verifier/` | ✓ Stable | File checks, quality scoring |
+| `generation/` | ✓ Stable | Incremental file builder, section generation |
+| `repair/` | ✓ Stable | RepairEngine with retry strategies |
+| `utils/` | ✓ Stable | Git, helpers, logging |
+
+---
 
 ## Installation
 
@@ -123,12 +140,14 @@ ollama pull mistral-small:latest
 
 ### Models Supported
 
-| Model | Role | Size | Required |
-|-------|------|------|----------|
-| `qwen3:14b` | Planner, architecture, analysis | ~14B | Yes |
-| `qwen2.5-coder:14b` | Code generation, patching, repair | ~14B | Yes |
-| `mistral-small:latest` | UI design, visual identity, creative | ~7B | Recommended |
-| `qwen2.5-coder:7b` | Fast edits, small fixes | ~7B | Optional |
+| Model | Capabilities | Size | Required |
+|-------|-------------|------|----------|
+| `qwen3:14b` | Planning, Reasoning, Architecture, Task Analysis, Project Decomposition | ~14B | Yes |
+| `qwen2.5-coder:14b` | Code Generation, Refactoring, Bug Fixing, File Implementation | ~14B | Yes |
+| `mistral-small:latest` | UI Design, UX Design, Visual Refinement, Design Language | ~7B | Recommended |
+| `qwen2.5-coder:7b` | Fast Edits, Small Repairs, Lightweight Coding | ~7B | Optional |
+| `llama3:latest` | Documentation, Explanations, General Chat | ~8B | Optional |
+| `deepseek-coder:latest` | Fast Edits, Small Repairs, Lightweight Coding | ~7B | Optional |
 
 ### Quick Start
 
@@ -148,22 +167,116 @@ python agent.py --plain
 
 ---
 
+## CLI Commands
+
+### Router Commands
+```
+/route <request>           Analyze and display model routing decisions
+/router-mode <mode>        Set routing mode (performance|quality|balanced)
+/router-always <model>     Always use a specific model for all stages
+/router-prefer <model>     Prefer a specific model when capabilities match
+/router-disable <model>    Disable a specific model from routing
+```
+
+### Git Commands
+```
+/git-status                Show repository status
+/git-commit <msg>          Stage all and commit
+/git-undo                  Undo last commit (hard reset)
+/git-rollback              Roll back last commit (soft reset, keep changes)
+/git-revert [ref]          Revert a commit (default: HEAD)
+/git-restore               Restore most recent checkpoint
+/git-log [n]               Show commit log (default: 10)
+/git-diff [file]           Show working tree diff
+/git-branch [name]         List or create a branch
+/git-switch <name>         Switch to a branch
+/git-push [url]            Push to remote
+/git-release <tag>         Create and push a release tag
+```
+
+### Planning
+```
+/plan <request>            Analyze a request and produce an execution plan
+```
+
+---
+
 ## Roadmap Summary
 
 | Phase | Milestone | Status |
 |-------|-----------|--------|
 | 1 | Foundation — Git, workspace, project structure | ✓ Complete |
-| 2 | Planner — structured JSON plan from Qwen3 | ⏳ Next |
-| 3 | Model Router — stage-aware routing with fallbacks | Planned |
-| 4 | Streaming Generator — token stream, progress events | Planned |
-| 5 | Live Terminal — real-time pipeline display | Planned |
-| 6 | Verifier — syntax checks, quality scoring | Planned |
-| 7 | Repair Engine — failure analysis, retry strategies | Planned |
-| 8 | Project Memory — .steve artifact persistence | Planned |
+| 2 | Planner — structured JSON plan from Qwen3 | ✓ Complete |
+| 3 | State Manager — persistent session state | ✓ Complete |
+| 4 | Model Router — capability-based routing, 6 profiles | ✓ Complete |
+| 5 | Streaming Generator — live token display, progress tracking | ✓ Complete |
+| 6 | Verifier — syntax checks, quality scoring | ⏳ Next |
+| 7 | Repair Engine — failure analysis, retry strategies | ⏳ Next |
+| 8 | Project Memory — .steve artifact persistence | ⏳ Next |
 | 9 | Plugins — custom generators, integrations | Future |
-| 10 | Stable Release — v4.0.0 stable | Future |
+| 10 | Live Terminal — enhanced real-time pipeline UI | Future |
+| 11 | Stable Release — v4.0.0 stable | Future |
 
 See [ROADMAP.md](./ROADMAP.md) for full details.
+
+---
+
+## Development Log
+
+### 2026-07-15 — Streaming Generation Engine (v4.0.0-alpha.3)
+
+**Purpose:** Replace blocking generation with live streaming output. Steve must never appear frozen.
+
+**Modules added:**
+- `streaming/__init__.py` — package exports
+- `streaming/stream_manager.py` — section-by-section streaming orchestrator
+- `streaming/token_stream.py` — real-time token streaming from Ollama
+- `streaming/progress_tracker.py` — section/file-level progress with timing
+- `streaming/output_renderer.py` — terminal rendering of streaming output
+
+**Architecture changes:**
+- New `streaming/` top-level module with 4 sub-modules
+- `IncrementalFileBuilder` integrated with `StreamManager` for live output
+- Continuous StateManager updates during streaming
+- Per-section timing and token-count tracking
+
+**Commit:** `f0b0799` (Model Router) + next commit (Streaming Engine)
+
+**Current completion:** ~45%
+
+### 2026-07-15 — Model Router (v4.0.0-alpha.2)
+
+**Purpose:** Replace hardcoded single-model routing with intelligent capability-based model selection.
+
+**Modules added:**
+- `router/__init__.py` — package exports (40+ symbols)
+- `router/capabilities.py` — 19 capabilities, 29 stage mappings, 32 role mappings
+- `router/model_profiles.py` — 6 model profiles with capability registries
+- `router/routing_rules.py` — rule engine with priority chain and config overrides
+- `router/performance.py` — model performance tracking and persistence
+- `router/model_router.py` — IntelligentRouter with pipeline building and CLI display
+
+**Architecture changes:**
+- New `router/` top-level module with 6 sub-modules
+- Planner now delegates model selection to IntelligentRouter
+- StateManager tracks every model switch with stage and reason
+- CLI: `/route`, `/router-mode`, `/router-always`, `/router-prefer`, `/router-disable`
+
+**Commit:** `f0b0799`
+
+**Current completion:** ~30%
+
+### 2026-07-14 — Foundation & Core Pipeline (v4.0.0-alpha.1)
+
+**Purpose:** Establish the repository, Git subsystem, project structure, and core pipeline.
+
+**Modules added:** `config/`, `core/`, `providers/`, `actions/`, `ui/`, `verifier/`, `generation/`, `repair/`, `utils/`, `docs/`
+
+**Architecture changes:** Clean-slate rewrite from Steve v3. 14-layer pipeline design. Git as first-class subsystem.
+
+**Commit:** `72b233f`
+
+**Current completion:** ~15%
 
 ---
 
@@ -184,11 +297,46 @@ Steve-v4/
 │   ├── conversation.py       # Message history and context management
 │   ├── file_context.py       # File loading, relevance scoring, context building
 │   ├── inspector.py          # Project structure analysis (ProjectMap)
-│   ├── planner.py            # Task decomposition and LLM planning
-│   ├── model_router.py       # Task classification, stage routing, model selection
+│   ├── planner.py            # Legacy task decomposition planner
+│   ├── model_router.py       # Legacy task classification and routing
 │   ├── orchestrator.py       # v3 compatibility pipeline
 │   ├── pipeline.py           # v4 pipeline orchestrator with Git hooks
 │   └── project_memory.py     # .steve artifact persistence
+│
+├── state/                    # State management subsystem
+│   ├── __init__.py
+│   ├── state_manager.py      # StateManager singleton with 6 sub-states
+│   ├── execution_state.py    # Task execution tracking
+│   ├── task_state.py         # Task classification and metadata
+│   ├── project_state.py      # Project file and component tracking
+│   ├── model_state.py        # Model history and current model
+│   ├── git_state.py          # Git status and commit tracking
+│   └── verification_state.py # Verification results and repair tracking
+│
+├── planner/                  # Modular planning subsystem
+│   ├── __init__.py
+│   ├── planner.py            # PlanningEngine orchestrator
+│   ├── execution_plan.py     # Data classes (CompletePlan, TaskClassification, etc.)
+│   ├── task_classifier.py    # Task classification agent
+│   ├── architecture_planner.py  # Architecture planning agent
+│   ├── ui_planner.py         # UI/UX design planning agent
+│   ├── feature_planner.py    # Feature and verification planning agent
+│   └── _llm.py               # Low-level qwen3:14b caller
+│
+├── router/                   # Intelligent model router
+│   ├── __init__.py
+│   ├── model_router.py       # IntelligentRouter, pipeline builder, CLI display
+│   ├── routing_rules.py      # Rule engine with priority chain and overrides
+│   ├── model_profiles.py     # 6 model profiles with capability registries
+│   ├── capabilities.py       # Capability taxonomy and stage mappings
+│   └── performance.py        # Model performance tracking and persistence
+│
+├── streaming/                # Streaming generation engine
+│   ├── __init__.py
+│   ├── stream_manager.py     # Section-by-section streaming orchestrator
+│   ├── token_stream.py       # Real-time token streaming from Ollama
+│   ├── progress_tracker.py   # Section/file-level progress with timing
+│   └── output_renderer.py    # Terminal rendering of streaming output
 │
 ├── providers/                # AI provider integrations
 │   └── ollama.py             # Ollama API client (streaming, warming, install)
@@ -213,7 +361,7 @@ Steve-v4/
 ├── utils/                    # Shared utilities
 │   ├── helpers.py            # Environment detection, redaction
 │   ├── logger.py             # Debug logging to .steve/logs/
-│   ├── git_manager.py        # 22-method Git API (init, status, checkpoint, commit, rollback, etc.)
+│   ├── git_manager.py        # 22-method Git API
 │   └── git_integration.py    # High-level Git orchestration for pipeline
 │
 ├── docs/                     # Documentation
@@ -221,9 +369,6 @@ Steve-v4/
 │   ├── architecture.md       # Detailed architecture reference
 │   ├── git-integration.md    # Git subsystem reference
 │   └── development.md        # Development guide
-│
-├── resources/                # Non-code resources
-├── assets/                   # Static assets (images, templates)
 │
 ├── requirements.txt          # Python dependencies
 ├── README.md                 # This file

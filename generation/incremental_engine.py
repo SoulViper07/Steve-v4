@@ -11,6 +11,8 @@ from providers.ollama import fetch_response_stream
 from core.models import RequestRoute
 from core.project_memory import ProjectMemory
 from ui.terminal_renderer import get_pipeline, console
+from streaming.token_stream import TokenStream
+from streaming.output_renderer import OutputRenderer
 
 
 IDLE_TIMEOUT = 30.0  # seconds without tokens before abort
@@ -248,6 +250,8 @@ class SectionGenerator:
         section: str,
         context: Dict,
         callback: Optional[Callable[[str], None]] = None,
+        streaming: bool = False,
+        renderer: Optional[OutputRenderer] = None,
     ) -> Optional[str]:
         file_prompts = SECTION_PROMPTS.get(file_path)
         if not file_prompts:
@@ -273,6 +277,11 @@ class SectionGenerator:
             short_path=True,
             reason="section_generation",
         )
+
+        if streaming:
+            return self._generate_section_streaming(
+                file_path, section, prompt, coding_model, renderer,
+            )
 
         result = []
         last_token_time = time.monotonic()
@@ -308,6 +317,63 @@ class SectionGenerator:
                 self.memory.save_all()
             return None
 
+    def _generate_section_streaming(
+        self,
+        file_path: str,
+        section: str,
+        prompt: str,
+        model: str,
+        renderer: Optional[OutputRenderer] = None,
+    ) -> Optional[str]:
+        r = renderer or OutputRenderer()
+        r.section_start(file_path, section)
+
+        result = []
+        ts = TokenStream()
+
+        def on_token(tok: str):
+            if self._abort.is_set():
+                ts.abort()
+                return
+            r.display_tokens(tok)
+            result.append(tok)
+
+        try:
+            for token in ts.stream(
+                model=model,
+                messages=[{"role": "user", "content": prompt}],
+                on_token=on_token,
+            ):
+                if self._abort.is_set():
+                    ts.abort()
+                    return None
+
+            content = "".join(result).strip()
+            content = self._clean_section(content)
+
+            if content:
+                r.section_complete(
+                    file_path, section,
+                    ts._stats.total_tokens, len(content),
+                    ts._stats.elapsed,
+                )
+            else:
+                r.section_failed(file_path, section)
+
+            if self.memory:
+                self.memory.set_section_state(file_path, section, "done" if content else "failed")
+                self.memory.mark_component_done(f"{file_path}>{section}")
+                self.memory.save_all()
+
+            return content
+
+        except Exception as e:
+            r.section_failed(file_path, section, str(e))
+            if self.memory:
+                self.memory.set_section_state(file_path, section, "failed")
+                self.memory.save_all()
+            return None
+
     def _clean_section(self, content: str) -> str:
         content = re.sub(r"^```[\w]*\n", "", content)
         content = re.sub(r"\n```$", "", content)
@@ -333,14 +399,19 @@ class IncrementalFileBuilder:
         sections: List[str],
         context: Dict,
         pipeline=None,
+        streaming: bool = True,
+        renderer: Optional[OutputRenderer] = None,
     ) -> bool:
         full_path = self.workdir / file_path
         full_path.parent.mkdir(parents=True, exist_ok=True)
+        exists_before = full_path.exists() and full_path.stat().st_size > 0
 
         file_buffer = []
         all_ok = True
         retry_count = 0
         max_retries = 2
+
+        r = renderer or OutputRenderer()
 
         for section in sections:
             content = None
@@ -356,6 +427,8 @@ class IncrementalFileBuilder:
                 content = self.generator.generate_section(
                     file_path, section, context,
                     callback=lambda t: None,
+                    streaming=streaming,
+                    renderer=r,
                 )
 
                 if content:
@@ -367,8 +440,6 @@ class IncrementalFileBuilder:
 
             if content:
                 file_buffer.append(content)
-                if pipeline:
-                    pipeline.add("  ✓", f"[{file_path}] {section} generated ({len(content)} chars)", "ok")
                 if self.memory:
                     self.memory.set_section_state(file_path, section, "done")
             else:
@@ -379,8 +450,17 @@ class IncrementalFileBuilder:
         if file_buffer:
             combined = "\n\n".join(file_buffer)
             full_path.write_text(combined, encoding="utf-8")
-            if pipeline:
-                pipeline.file_created(f"{file_path} ({len(combined)} chars, {len(file_buffer)} sections)")
+
+            if exists_before:
+                r.file_updated(file_path, f"{len(combined)} chars, {len(file_buffer)} sections")
+            else:
+                r.file_created(file_path, len(combined), len(file_buffer))
+
+            if pipeline and not exists_before:
+                pipeline.file_created(file_path)
+            elif pipeline:
+                pipeline.file_edited(file_path)
+
             if self.memory:
                 self.memory.set_generation_state({f"files.{file_path}": "done"})
                 self.memory.save_all()
@@ -393,16 +473,18 @@ class IncrementalFileBuilder:
         files: Dict[str, List[str]],
         context: Dict,
         pipeline=None,
+        streaming: bool = True,
+        renderer: Optional[OutputRenderer] = None,
     ) -> bool:
         overall_ok = True
-        if pipeline:
-            pipeline.add("  📁", f"Creating {len(files)} files with sections...", "step")
+        r = renderer or OutputRenderer()
+        r.stage_progress("implementing")
 
         for file_path, sections in files.items():
             if pipeline:
                 pipeline.add("📄", f"Building {file_path} ({len(sections)} sections)", "step")
 
-            ok = self.build_file(file_path, sections, context, pipeline)
+            ok = self.build_file(file_path, sections, context, pipeline, streaming=streaming, renderer=r)
             if not ok:
                 overall_ok = False
                 if pipeline:

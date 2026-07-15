@@ -2,7 +2,11 @@
 
 ## Overview
 
-Steve v4 is built in 10 phases. Each phase produces a working, testable increment. Phases 1–3 establish the foundation, phases 4–7 build the AI pipeline, phases 8–9 add advanced features, and phase 10 stabilizes for release.
+Steve v4 is built in 10 phases. Each phase produces a working, testable increment.
+
+**Current phase:** 6 — Verifier
+
+**Progress:** 45% — Foundation ✓, Planner ✓, State Manager ✓, Model Router ✓, Streaming ✓
 
 ---
 
@@ -27,72 +31,87 @@ Steve v4 is built in 10 phases. Each phase produces a working, testable incremen
 
 ---
 
-## Phase 2 — Planner ⏳
+## Phase 2 — Planner ✓
 
 *Implement the structured plan generator using Qwen3:14b.*
 
-- [ ] `TaskAnalyzer` — intent classification and operational detection
-- [ ] `Planner` rewrite — structured JSON plan output from Qwen3
-- [ ] Quality profile system (quick, standard, premium, cinematic)
-- [ ] Plan parsing — regex-free, schema-validated extraction
-- [ ] Component auto-detection from plan
-- [ ] Plan persistence in `ProjectMemory`
-- [ ] Fallback plan generation when LLM unavailable
+- [x] `PlanningEngine` with 4 sub-planners (task classifier, architecture, UI, features)
+- [x] Structured `CompletePlan` with `ExecutionRoadmap`
+- [x] Task classification — project type, complexity, category, languages, frameworks
+- [x] Architecture planning — component tree, file map, data flow
+- [x] UI planning — design language, color scheme, typography, layout archetype
+- [x] Feature planning — features, verification strategy, dependencies, model recommendations
+- [x] Plan persistence to `.steve/plans/{task_id}/`
+- [x] Fallback plan generation when LLM unavailable
+- [x] StateManager integration — task classification, architecture, feature updates
 
 **Deliverable:** Steve can analyze a request and produce a structured, queryable plan.
 
 ---
 
-## Phase 3 — Model Router
+## Phase 3 — State Manager ✓
 
-*Build the stage-aware model routing and fallback system.*
+*Implement persistent session state across all subsystems.*
 
-- [ ] `ModelRouter` rewrite — 14-layer stage-to-model mapping
-- [ ] Fallback chain (primary → secondary → fallback → graceful error)
-- [ ] Model warm-up manager (pre-load models on startup)
-- [ ] Per-stage parameter tuning (temperature, context, predict)
-- [ ] Manual model override from CLI
-- [ ] Model health checks and availability detection
-- [ ] Model switching notifications in UI
+- [x] `StateManager` singleton with 6 sub-states (execution, task, project, model, git, verification)
+- [x] JSON persistence to `.steve/state/` with atomic writes
+- [x] Full public API: `initialize_task`, `start_stage`, `finish_stage`, `set_model`, `mark_generated`, `mark_modified`, `mark_verified`, `mark_committed`
+- [x] Auto-save on every mutation
+- [x] Task lifecycle management — initialization, stage transitions, completion tracking
+- [x] Model history — every model switch recorded with stage and reason
+- [x] Project tracking — generated files, modified files, components, folder structure
+- [x] Verification tracking — status, score, issues, repair attempts
+- [x] Git tracking — branch, commit status, checkpoint history
+- [x] `summary_dict()` — nested report for pipeline display
 
-**Deliverable:** Pipeline routes each stage to the optimal model with automatic fallback.
-
----
-
-## Phase 4 — Streaming Generation
-
-*Implement token-streaming file generation with progress events.*
-
-- [ ] `StreamingGenerator` — token stream → chunked output
-- [ ] Section-based file generation (generic, not HTML-only)
-- [ ] Section prompt library (reusable prompts for common file types)
-- [ ] Progress events (section started, token received, section complete)
-- [ ] Abort/cancel support during generation
-- [ ] Retry logic per section with exponential backoff
-- [ ] File assembly (concatenate sections into complete files)
-
-**Deliverable:** Steve generates multi-section files with real-time streaming and progress.
+**Deliverable:** Every subsystem tracks its state in a unified, persistent singleton.
 
 ---
 
-## Phase 5 — Live Terminal
+## Phase 4 — Model Router ✓
 
-*Enhance the terminal UI with real-time pipeline visualization.*
+*Build the intelligent capability-based model selection system.*
 
-- [ ] Real-time pipeline stage indicator
-- [ ] Live token streaming display in terminal
-- [ ] Progress bar per file/section
-- [ ] Timeline view with stage durations
-- [ ] Git activity block (checkpoints, commits, rollbacks)
-- [ ] Collapsible sections for verbose output
-- [ ] Clean summary mode for production use
-- [ ] ANSI/ASCII fallback for all display components
+- [x] `IntelligentRouter` — task classification, pipeline building, model selection
+- [x] 6 model profiles with capability registries (Qwen3, Qwen2.5-Coder:14b, Mistral Small, Qwen2.5-Coder:7b, Llama3, Deepseek Coder)
+- [x] 19 capability definitions (planning, reasoning, architecture, code generation, UI design, etc.)
+- [x] 29 stage-to-capability mappings, 32 stage-to-role mappings
+- [x] Capability matching — score models by capability overlap, priority, speed, quality
+- [x] Three routing modes: `quality`, `performance`, `balanced`
+- [x] Rule engine with priority chain: `always_use` → `prefer` → `planner_recommendation` → `capability_match` → `first_available`
+- [x] Config override system — environment variables and runtime CLI commands
+- [x] Routing rules — `register_rule()` for custom rule extension
+- [x] `PerformanceTracker` — model response times, success rates, quality scores per stage/category
+- [x] Performance data persistence to `.steve/router/performance.json`
+- [x] `FeaturePlan.model_recommendations` mapped to stage-specific recommendations
+- [x] Planner integration — `_build_execution_roadmap` delegates to router
+- [x] StateManager integration — every model switch tracked with stage and reason
+- [x] CLI routing display — `/route`, `/router-mode`, `/router-always`, `/router-prefer`, `/router-disable`
 
-**Deliverable:** Rich, real-time terminal UI that shows pipeline progress, Git activity, and streamed output.
+**Deliverable:** Pipeline routes each stage to the optimal model with capability-based matching, configurable overrides, and performance feedback.
 
 ---
 
-## Phase 6 — Verifier
+## Phase 5 — Streaming Generation ✓
+
+*Implement token-streaming file generation with live progress display.*
+
+- [x] `StreamManager` — orchestrates section-by-section file generation with streaming
+- [x] `TokenStream` — wraps Ollama streaming with timing, abort, and progress callbacks
+- [x] `ProgressTracker` — per-file and per-section progress with timing and statistics
+- [x] `OutputRenderer` — real-time terminal display of tokens, file ops, and diff-style indicators
+- [x] Live progress: analyzing → planning → routing → generating → writing → verifying → committing
+- [x] Per-file operation display: `* index.html created`, `* styles.css updated`
+- [x] Diff-style indicators: `+ Added component`, `- Removed legacy`, `~ Updated interface`
+- [x] Section-level progress with token count and timing
+- [x] StateManager updates during streaming
+- [x] Integration with `IncrementalFileBuilder` and pipeline
+
+**Deliverable:** Steve generates files with live streaming output, real-time progress, and continuous state tracking.
+
+---
+
+## Phase 6 — Verifier ⏳
 
 *Implement multi-dimensional verification and quality scoring.*
 
@@ -109,7 +128,7 @@ Steve v4 is built in 10 phases. Each phase produces a working, testable incremen
 
 ---
 
-## Phase 7 — Repair Engine
+## Phase 7 — Repair Engine ⏳
 
 *Implement failure analysis, retry strategies, and automatic repair.*
 
@@ -125,7 +144,7 @@ Steve v4 is built in 10 phases. Each phase produces a working, testable incremen
 
 ---
 
-## Phase 8 — Project Memory
+## Phase 8 — Project Memory ⏳
 
 *Implement persistent project state across sessions.*
 
@@ -144,7 +163,7 @@ Steve v4 is built in 10 phases. Each phase produces a working, testable incremen
 
 ---
 
-## Phase 9 — Plugins
+## Phase 9 — Plugins ⏳
 
 *Create a plugin system for custom generators, verifiers, and integrations.*
 
@@ -160,7 +179,24 @@ Steve v4 is built in 10 phases. Each phase produces a working, testable incremen
 
 ---
 
-## Phase 10 — Stable Release
+## Phase 10 — Live Terminal ⏳
+
+*Enhance the terminal UI with real-time pipeline visualization.*
+
+- [ ] Real-time pipeline stage indicator
+- [ ] Live token streaming display in terminal
+- [ ] Progress bar per file/section
+- [ ] Timeline view with stage durations
+- [ ] Git activity block (checkpoints, commits, rollbacks)
+- [ ] Collapsible sections for verbose output
+- [ ] Clean summary mode for production use
+- [ ] ANSI/ASCII fallback for all display components
+
+**Deliverable:** Rich, real-time terminal UI that shows pipeline progress, Git activity, and streamed output.
+
+---
+
+## Phase 11 — Stable Release ⏳
 
 *Polish, test, document, and release Steve v4.0.0 stable.*
 
