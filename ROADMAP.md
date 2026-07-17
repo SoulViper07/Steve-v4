@@ -4,9 +4,9 @@
 
 Steve v4 is built in 11 phases. Each phase produces a working, testable increment.
 
-**Current phase:** 7 — Verifier
+**Current phase:** 8 — Verifier
 
-**Progress:** 55% — Foundation ✓, Planner ✓, State Manager ✓, Model Router ✓, Streaming ✓, Execution Engine ✓
+**Progress:** 65% — Foundation ✓, Planner ✓, State Manager ✓, Model Router ✓, Streaming ✓, Execution Engine ✓, Workspace Manager ✓
 
 ---
 
@@ -131,7 +131,27 @@ Steve v4 is built in 11 phases. Each phase produces a working, testable incremen
 
 ---
 
-## Phase 7 — Verifier ⏳
+## Phase 7 — Workspace Manager ✓
+
+*Implement the centralized workspace and file system manager responsible for all filesystem operations.*
+
+- [x] `WorkspaceManager` — single authority for all filesystem operations, integrates with StateManager
+- [x] `PathResolver` — absolute/relative path resolution, exclusion rules, glob support, directory creation
+- [x] `ProjectScanner` — recursive directory tree scanning with configurable excluded dirs and extensions
+- [x] `FileTracker` — in-memory project index: 40+ language detection, framework detection, generation/verification status per file
+- [x] `FileManager` — full CRUD: create, read, update, rename, move, delete. Backup/restore to `.steve/backups/`
+- [x] Smart writes — compare existing content before overwriting; skip if identical; use surgical edits when possible
+- [x] Surgical edits — three strategies: exact match, whitespace-normalized match, fuzzy match (threshold 0.72)
+- [x] `ChangeDetector` — snapshot-based change detection: added, modified, deleted, and moved files
+- [x] `FileDependencyGraph` — file-level import analysis for Python (`import`/`from`), JS/TS (`require`/`import`), HTML (`link`/`script`/`img`), CSS (`@import`/`url()`)
+- [x] Framework detection — Flask, Django, FastAPI, React, Vue, Svelte, Express, Next.js, Tailwind, Bootstrap
+- [x] Config file detection — package.json, requirements.txt, Dockerfile, tsconfig, etc.
+- [x] Continuous StateManager updates — project tree, current file, generated/modified files
+- [x] CLI display — scanning, indexing, file operations, change summary
+
+**Deliverable:** WorkspaceManager becomes the only component allowed to perform filesystem operations. No other module writes directly to disk.
+
+---
 
 *Implement multi-dimensional verification and quality scoring.*
 
@@ -148,7 +168,7 @@ Steve v4 is built in 11 phases. Each phase produces a working, testable incremen
 
 ---
 
-## Phase 8 — Repair Engine ⏳
+## Phase 9 — Repair Engine ⏳
 
 *Implement failure analysis, retry strategies, and automatic repair.*
 
@@ -164,7 +184,7 @@ Steve v4 is built in 11 phases. Each phase produces a working, testable incremen
 
 ---
 
-## Phase 9 — Project Memory ⏳
+## Phase 10 — Project Memory ⏳
 
 *Implement persistent project state across sessions.*
 
@@ -183,7 +203,7 @@ Steve v4 is built in 11 phases. Each phase produces a working, testable incremen
 
 ---
 
-## Phase 10 — Plugins ⏳
+## Phase 11 — Plugins ⏳
 
 *Create a plugin system for custom generators, verifiers, and integrations.*
 
@@ -199,7 +219,7 @@ Steve v4 is built in 11 phases. Each phase produces a working, testable incremen
 
 ---
 
-## Phase 11 — Live Terminal ⏳
+## Phase 12 — Live Terminal ⏳
 
 *Enhance the terminal UI with real-time pipeline visualization.*
 
@@ -216,7 +236,7 @@ Steve v4 is built in 11 phases. Each phase produces a working, testable incremen
 
 ---
 
-## Phase 12 — Stable Release ⏳
+## Phase 13 — Stable Release ⏳
 
 *Polish, test, document, and release Steve v4.0.0 stable.*
 

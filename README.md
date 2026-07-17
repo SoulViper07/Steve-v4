@@ -14,11 +14,11 @@ Steve v4 delivers on that vision by making every subsystem a first-class citizen
 
 ---
 
-## Latest Milestone: Execution Engine
+## Latest Milestone: Workspace & File System Manager
 
-**v4.0.0-alpha.4** — Autonomous execution engine with atomic stage decomposition, dependency graph, and per-stage failure recovery.
+**v4.0.0-alpha.5** — Centralized workspace manager responsible for all filesystem operations.
 
-The Execution Engine is the runtime that decides HOW to build what the Planner decides WHAT to build. It breaks execution plans into atomic stages, resolves dependencies via a directed acyclic graph, executes each stage through a dedicated stage executor, and retries only failed stages instead of regenerating the entire project.
+Steve now understands projects instead of blindly writing files. The WorkspaceManager is the only component allowed to perform filesystem operations — it creates, reads, updates, renames, moves, deletes, backs up, and restores files. It maintains an in-memory project index tracking every file's type, language, dependencies, generation status, and verification status. Smart writes compare existing content before overwriting, and surgical edits apply minimal patches when possible.
 
 ---
 
@@ -27,6 +27,7 @@ The Execution Engine is the runtime that decides HOW to build what the Planner d
 - **Conversational-first** — chat, explain, debug, plan, and brainstorm in natural language. No action tags needed for discussion.
 - **Autonomous action** — build, create, fix, refactor, and generate projects via action tags. Infer operational intent automatically.
 - **Execution Engine** — receives plans from Planner, decomposes work into atomic stages, resolves dependencies via directed acyclic graph, executes each stage independently, retries only failed stages.
+- **Workspace Manager** — centralized filesystem authority: creates, reads, updates, renames, moves, deletes, backs up, restores files. Smart writes, surgical edits, change detection, language/framework detection, file dependency graph.
 - **Git as backbone** — auto-initialize repo, checkpoint before every task, auto-commit on verification pass, rollback, undo, branch management. 13 Git commands available.
 - **Intelligent model routing** — capability-based model selection across 6 models. Three routing modes (quality, performance, balanced). Configurable overrides. Performance tracking and feedback.
 - **Live streaming generation** — real-time token display during file generation. Per-section progress with timing. Never appears frozen.
@@ -75,8 +76,8 @@ The Execution Engine is the runtime that decides HOW to build what the Planner d
 │                   Streaming Generator                      │
 │     Token stream → chunked output, live progress display   │
 ├───────────────────────────────────────────────────────────┤
-│                      File Writer                           │
-│       Action tag parser, file I/O, backup, boundaries      │
+│                   Workspace Manager                         │
+│   File CRUD, smart writes, change detection, project index │
 ├───────────────────────────────────────────────────────────┤
 │                       Verifier                             │
 │     File existence, syntax checks, quality scoring         │
@@ -103,7 +104,8 @@ The Execution Engine is the runtime that decides HOW to build what the Planner d
 | `state/` | ✓ Stable | StateManager — 6 sub-states, JSON persistence |
 | `planner/` | ✓ Stable | 4 sub-planners, structured CompletePlan |
 | `router/` | ✓ Stable | IntelligentRouter, 6 profiles, capability matching |
-| `execution/` | ✓ New | ExecutionEngine, atomic stage decomposition, dependency graph, per-stage retry |
+| `execution/` | ✓ Stable | ExecutionEngine, atomic stage decomposition, dependency graph, per-stage retry |
+| `workspace/` | ✓ New | WorkspaceManager, file CRUD, smart writes, change detection, project index |
 | `streaming/` | ✓ Stable | Live token streaming, progress tracking, real-time display |
 | `providers/` | ✓ Stable | Ollama API client (streaming, warming) |
 | `actions/` | ✓ Stable | Action tag parser/executor |
@@ -216,12 +218,13 @@ python agent.py --plain
 | 4 | Model Router — capability-based routing, 6 profiles | ✓ Complete |
 | 5 | Streaming Generator — live token display, progress tracking | ✓ Complete |
 | 6 | Execution Engine — atomic stage decomposition, dependency graph, per-stage retry | ✓ Complete |
-| 7 | Verifier — syntax checks, quality scoring | ⏳ Next |
-| 8 | Repair Engine — failure analysis, retry strategies | ⏳ Next |
-| 9 | Project Memory — .steve artifact persistence | ⏳ Next |
-| 10 | Plugins — custom generators, integrations | Future |
-| 11 | Live Terminal — enhanced real-time pipeline UI | Future |
-| 12 | Stable Release — v4.0.0 stable | Future |
+| 7 | Workspace Manager — centralized filesystem authority, project index, smart writes | ✓ Complete |
+| 8 | Verifier — syntax checks, quality scoring | ⏳ Next |
+| 9 | Repair Engine — failure analysis, retry strategies | ⏳ Next |
+| 10 | Project Memory — .steve artifact persistence | ⏳ Next |
+| 11 | Plugins — custom generators, integrations | Future |
+| 12 | Live Terminal — enhanced real-time pipeline UI | Future |
+| 13 | Stable Release — v4.0.0 stable | Future |
 
 See [ROADMAP.md](./ROADMAP.md) for full details.
 
@@ -229,7 +232,33 @@ See [ROADMAP.md](./ROADMAP.md) for full details.
 
 ## Development Log
 
-### 2026-07-17 — Execution Engine (v4.0.0-alpha.4)
+### 2026-07-17 — Workspace & File System Manager (v4.0.0-alpha.5)
+
+**Purpose:** Give Steve true project awareness. WorkspaceManager becomes the single authority for all filesystem operations — no other module writes directly to disk.
+
+**Modules added:**
+- `workspace/__init__.py` — package exports
+- `workspace/workspace_manager.py` — main orchestrator, integrates all subsystems
+- `workspace/project_tree.py` — directory tree scanner with exclusion support
+- `workspace/file_manager.py` — file CRUD, backups, smart writes, surgical edits (exact/WS-normalized/fuzzy)
+- `workspace/file_tracker.py` — in-memory project index: 40+ languages, framework detection, generation/verification status
+- `workspace/dependency_graph.py` — file-level import analysis for Python, JS, TS, HTML, CSS
+- `workspace/change_detector.py` — detects added, modified, deleted, and moved files
+- `workspace/path_resolver.py` — absolute/relative path resolution, exclusion rules, glob support
+
+**Architecture changes:**
+- New `workspace/` top-level module with 8 sub-modules
+- WorkspaceManager replaces direct filesystem access across the codebase
+- Project index tracks every file's path, type, language, size, line count, dependencies, generation status, verification status
+- Smart writes compare existing content before overwriting — no unnecessary churn
+- Surgical edits try exact match, whitespace-normalized match, then fuzzy match before falling back to full overwrite
+- Change detection snapshots index state and detects added/modified/deleted/moved files in one pass
+- Language detection covers 40+ file extensions
+- Framework detection identifies Flask, Django, FastAPI, React, Vue, Svelte, Express, Next.js, Tailwind, Bootstrap
+- Backup/restore system stores timestamped backups in `.steve/backups/`
+- Continuous StateManager integration for project tree and file tracking
+
+**Current completion:** ~65%
 
 **Purpose:** Decide HOW to build what the Planner decides WHAT to build. Break execution plans into atomic stages, resolve dependencies, execute independently, and retry only failed stages.
 
@@ -249,7 +278,7 @@ See [ROADMAP.md](./ROADMAP.md) for full details.
 - Integration with StateManager for continuous stage tracking
 - Progress bar with percentage and stage label displayed during execution
 
-**Current completion:** ~55%
+**Current completion:** ~65%
 
 ### 2026-07-15 — Model Router (v4.0.0-alpha.2)
 
@@ -345,6 +374,16 @@ Steve-v4/
 │   ├── dependency_manager.py # Directed acyclic dependency graph
 │   ├── task_scheduler.py     # Atomic stage decomposition
 │   └── stage_executor.py     # Stage dispatcher (folder, file gen, verify, repair)
+│
+├── workspace/                # Centralized workspace & file system manager
+│   ├── __init__.py
+│   ├── workspace_manager.py  # Main orchestrator — file CRUD, project index, change detection
+│   ├── project_tree.py       # Directory tree scanner with exclusions
+│   ├── file_manager.py       # Smart writes, surgical edits, backup/restore
+│   ├── file_tracker.py       # In-memory project index (40+ languages, framework detection)
+│   ├── dependency_graph.py   # File-level import analysis
+│   ├── change_detector.py    # Added/modified/deleted/moved file detection
+│   └── path_resolver.py      # Absolute/relative path resolution
 │
 ├── streaming/                # Streaming generation engine
 │   ├── __init__.py

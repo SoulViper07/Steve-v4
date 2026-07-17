@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [4.0.0-alpha.5] — 2026-07-17
+
+### Added
+- **Workspace & File System Manager** — `workspace/` module with 8 sub-modules for centralized filesystem authority
+- `WorkspaceManager` — orchestrates all filesystem operations, integrates with StateManager, single entry point for disk I/O
+- `PathResolver` — absolute/relative path resolution, exclusion rules (`.git`, `__pycache__`, `node_modules`, etc.), glob support
+- `ProjectScanner` — recursive directory tree scanning with configurable excluded directories and file extensions
+- `FileTracker` — in-memory project index: 40+ language detection, framework detection (Flask, Django, FastAPI, React, Vue, Svelte, Express, Next.js, Tailwind, Bootstrap), generation/verification status per file
+- `FileManager` — full file CRUD (create, read, update, rename, move, delete), backup/restore to `.steve/backups/`
+- Smart writes — compare existing content before overwriting; skip if identical; apply surgical edits when possible
+- Surgical edit strategies — exact match, whitespace-normalized match, fuzzy match (sequences with ratio >= 0.72)
+- `ChangeDetector` — snapshot-based change detection across four change types: added, modified, deleted, moved
+- `FileDependencyGraph` — file-level import analysis: Python (`import`/`from`), JS/TS (`require`/`import` `from`), HTML (`link`/`script`/`img` `src`), CSS (`@import`/`url()`)
+- Config file detection — package.json, requirements.txt, pyproject.toml, Dockerfile, tsconfig.json, .gitignore, and more
+- Continuous StateManager updates for project tree, current file, generated and modified files
+- CLI display: workspace scanning, indexing statistics, file operation results, change summaries
+
+### Changed
+- New `workspace/` top-level module added to the architecture between Streaming Generator and File Writer
+- WorkspaceManager becomes the only component allowed to perform filesystem operations
+- Module status table includes `workspace/` as a new module
+- Project completion percentage updated from 55% to 65%
+
+---
+
 ## [4.0.0-alpha.4] — 2026-07-17
 
 ### Added
