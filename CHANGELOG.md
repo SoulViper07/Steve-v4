@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [4.0.0-alpha.4] — 2026-07-17
+
+### Added
+- **Execution Engine** — `execution/` module with 6 sub-modules for autonomous execution orchestration
+- `ExecutionEngine` — receives `CompletePlan` from Planner, coordinates full execution lifecycle, manages stage ordering via dependency graph
+- `ExecutionContext` — tracks current stage, completed/remaining stages, progress percentage, elapsed time, retry counts
+- `DependencyManager` — builds directed acyclic dependency graphs with topological sort, parallel level detection, cycle validation
+- `TaskScheduler` — decomposes execution plans into independently executable atomic stages (folder, html, css, js, verify, repair, finalize)
+- `StageExecutor` — dispatches stages to type-specific handlers: folder creation, file generation, verification, repair, finalization
+- Per-stage failure recovery — only the failed stage is retried (up to 2 retries), never the entire project
+- Dependency graph execution — each stage waits only for its required dependencies before executing
+- Live progress bar with percentage and current stage label during execution
+- Full abort support — clean shutdown on interrupt at any point during execution
+- Continuous StateManager integration — every stage transition updates execution state
+
+### Changed
+- New `execution/` top-level module added to the architecture pipeline between Planner and Implementation Engine
+- README architecture diagram updated to include Execution Engine layer
+- Module status table includes `execution/` as a new module
+- Project completion percentage updated from 45% to 55%
+
+---
+
 ## [4.0.0-alpha.3] — 2026-07-15
 
 ### Added

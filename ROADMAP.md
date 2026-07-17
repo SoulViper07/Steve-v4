@@ -2,11 +2,11 @@
 
 ## Overview
 
-Steve v4 is built in 10 phases. Each phase produces a working, testable increment.
+Steve v4 is built in 11 phases. Each phase produces a working, testable increment.
 
-**Current phase:** 6 — Verifier
+**Current phase:** 7 — Verifier
 
-**Progress:** 45% — Foundation ✓, Planner ✓, State Manager ✓, Model Router ✓, Streaming ✓
+**Progress:** 55% — Foundation ✓, Planner ✓, State Manager ✓, Model Router ✓, Streaming ✓, Execution Engine ✓
 
 ---
 
@@ -111,7 +111,27 @@ Steve v4 is built in 10 phases. Each phase produces a working, testable incremen
 
 ---
 
-## Phase 6 — Verifier ⏳
+## Phase 6 — Execution Engine ✓
+
+*Implement the autonomous execution runtime that receives plans from Planner and breaks them into atomic stages.*
+
+- [x] `ExecutionEngine` — receives `CompletePlan` from Planner, orchestrates full execution lifecycle
+- [x] `ExecutionContext` — tracks current stage, completed stages, remaining stages, progress percentage, elapsed time
+- [x] `DependencyManager` — builds and validates directed acyclic dependency graphs, topological sort, parallel level detection
+- [x] `TaskScheduler` — decomposes plans into independently executable atomic stages (folder, html, css, js, verify, repair, finalize)
+- [x] `StageExecutor` — dispatches to type-specific handlers (folder creation, file generation via `IncrementalFileBuilder`, verification via `base_verifier`, repair via `RepairEngine`)
+- [x] Dependency graph ensures stages execute only after their dependencies complete
+- [x] Per-stage failure recovery — only the failed stage is retried, never the entire project
+- [x] Progress bar with percentage and stage label displayed during execution
+- [x] Continuous StateManager updates through every stage transition
+- [x] Integration with existing Planner, Router, Streaming, Verifier, and Repair modules
+- [x] Abort support — clean shutdown on user interrupt
+
+**Deliverable:** Steve autonomously executes multi-stage plans with dependency resolution, per-stage retry, and real-time progress display.
+
+---
+
+## Phase 7 — Verifier ⏳
 
 *Implement multi-dimensional verification and quality scoring.*
 
@@ -128,7 +148,7 @@ Steve v4 is built in 10 phases. Each phase produces a working, testable incremen
 
 ---
 
-## Phase 7 — Repair Engine ⏳
+## Phase 8 — Repair Engine ⏳
 
 *Implement failure analysis, retry strategies, and automatic repair.*
 
@@ -144,7 +164,7 @@ Steve v4 is built in 10 phases. Each phase produces a working, testable incremen
 
 ---
 
-## Phase 8 — Project Memory ⏳
+## Phase 9 — Project Memory ⏳
 
 *Implement persistent project state across sessions.*
 
@@ -163,7 +183,7 @@ Steve v4 is built in 10 phases. Each phase produces a working, testable incremen
 
 ---
 
-## Phase 9 — Plugins ⏳
+## Phase 10 — Plugins ⏳
 
 *Create a plugin system for custom generators, verifiers, and integrations.*
 
@@ -179,7 +199,7 @@ Steve v4 is built in 10 phases. Each phase produces a working, testable incremen
 
 ---
 
-## Phase 10 — Live Terminal ⏳
+## Phase 11 — Live Terminal ⏳
 
 *Enhance the terminal UI with real-time pipeline visualization.*
 
@@ -196,7 +216,7 @@ Steve v4 is built in 10 phases. Each phase produces a working, testable incremen
 
 ---
 
-## Phase 11 — Stable Release ⏳
+## Phase 12 — Stable Release ⏳
 
 *Polish, test, document, and release Steve v4.0.0 stable.*
 

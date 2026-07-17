@@ -14,11 +14,11 @@ Steve v4 delivers on that vision by making every subsystem a first-class citizen
 
 ---
 
-## Latest Milestone: Streaming Generation Engine
+## Latest Milestone: Execution Engine
 
-**v4.0.0-alpha.3** — Live streaming generation with real-time progress display.
+**v4.0.0-alpha.4** — Autonomous execution engine with atomic stage decomposition, dependency graph, and per-stage failure recovery.
 
-Steve no longer freezes while generating files. Tokens stream to the terminal in real-time as each file section is generated. Every operation — file creation, modification, patching — is displayed with clear indicators. The StateManager updates continuously throughout the process.
+The Execution Engine is the runtime that decides HOW to build what the Planner decides WHAT to build. It breaks execution plans into atomic stages, resolves dependencies via a directed acyclic graph, executes each stage through a dedicated stage executor, and retries only failed stages instead of regenerating the entire project.
 
 ---
 
@@ -26,11 +26,12 @@ Steve no longer freezes while generating files. Tokens stream to the terminal in
 
 - **Conversational-first** — chat, explain, debug, plan, and brainstorm in natural language. No action tags needed for discussion.
 - **Autonomous action** — build, create, fix, refactor, and generate projects via action tags. Infer operational intent automatically.
+- **Execution Engine** — receives plans from Planner, decomposes work into atomic stages, resolves dependencies via directed acyclic graph, executes each stage independently, retries only failed stages.
 - **Git as backbone** — auto-initialize repo, checkpoint before every task, auto-commit on verification pass, rollback, undo, branch management. 13 Git commands available.
 - **Intelligent model routing** — capability-based model selection across 6 models. Three routing modes (quality, performance, balanced). Configurable overrides. Performance tracking and feedback.
 - **Live streaming generation** — real-time token display during file generation. Per-section progress with timing. Never appears frozen.
 - **Multi-model pipeline** — routes each pipeline stage to the optimal model via capability matching (Qwen3:14b, Qwen2.5-Coder, Mistral-Small, Llama3, Deepseek-Coder).
-- **Planned architecture** — modular pipeline with conversation manager, task analyzer, planner, architecture planner, model router, UI designer, implementation engine, streaming generator, file writer, verifier, repair engine, quality reviewer, and final report.
+- **Planned architecture** — modular pipeline with conversation manager, task analyzer, planner, architecture planner, model router, UI designer, execution engine, streaming generator, file writer, verifier, repair engine, quality reviewer, and final report.
 - **Incremental file generation** — section-by-section code building with retry logic and memory persistence.
 - **Visual identity generation** — design systems with palettes, typography, layout archetypes, and animation systems.
 - **Project verification** — file existence, syntax checks, quality scoring, and refinement triggers.
@@ -64,6 +65,9 @@ Steve no longer freezes while generating files. Tokens stream to the terminal in
 ├───────────────────────────────────────────────────────────┤
 │               UI Designer (Mistral-Small)                   │
 │      Visual identity, layout archetypes, design tokens     │
+├───────────────────────────────────────────────────────────┤
+│                     Execution Engine                        │
+│  Atomic stage decomposition, dependency graph, scheduling  │
 ├───────────────────────────────────────────────────────────┤
 │          Implementation Engine (Qwen2.5-Coder:14b)          │
 │          Code generation, patching, file creation          │
@@ -99,7 +103,8 @@ Steve no longer freezes while generating files. Tokens stream to the terminal in
 | `state/` | ✓ Stable | StateManager — 6 sub-states, JSON persistence |
 | `planner/` | ✓ Stable | 4 sub-planners, structured CompletePlan |
 | `router/` | ✓ Stable | IntelligentRouter, 6 profiles, capability matching |
-| `streaming/` | ✓ New | Live token streaming, progress tracking, real-time display |
+| `execution/` | ✓ New | ExecutionEngine, atomic stage decomposition, dependency graph, per-stage retry |
+| `streaming/` | ✓ Stable | Live token streaming, progress tracking, real-time display |
 | `providers/` | ✓ Stable | Ollama API client (streaming, warming) |
 | `actions/` | ✓ Stable | Action tag parser/executor |
 | `ui/` | ✓ Stable | Terminal renderer (Rich/ASCII) |
@@ -210,12 +215,13 @@ python agent.py --plain
 | 3 | State Manager — persistent session state | ✓ Complete |
 | 4 | Model Router — capability-based routing, 6 profiles | ✓ Complete |
 | 5 | Streaming Generator — live token display, progress tracking | ✓ Complete |
-| 6 | Verifier — syntax checks, quality scoring | ⏳ Next |
-| 7 | Repair Engine — failure analysis, retry strategies | ⏳ Next |
-| 8 | Project Memory — .steve artifact persistence | ⏳ Next |
-| 9 | Plugins — custom generators, integrations | Future |
-| 10 | Live Terminal — enhanced real-time pipeline UI | Future |
-| 11 | Stable Release — v4.0.0 stable | Future |
+| 6 | Execution Engine — atomic stage decomposition, dependency graph, per-stage retry | ✓ Complete |
+| 7 | Verifier — syntax checks, quality scoring | ⏳ Next |
+| 8 | Repair Engine — failure analysis, retry strategies | ⏳ Next |
+| 9 | Project Memory — .steve artifact persistence | ⏳ Next |
+| 10 | Plugins — custom generators, integrations | Future |
+| 11 | Live Terminal — enhanced real-time pipeline UI | Future |
+| 12 | Stable Release — v4.0.0 stable | Future |
 
 See [ROADMAP.md](./ROADMAP.md) for full details.
 
@@ -223,26 +229,27 @@ See [ROADMAP.md](./ROADMAP.md) for full details.
 
 ## Development Log
 
-### 2026-07-15 — Streaming Generation Engine (v4.0.0-alpha.3)
+### 2026-07-17 — Execution Engine (v4.0.0-alpha.4)
 
-**Purpose:** Replace blocking generation with live streaming output. Steve must never appear frozen.
+**Purpose:** Decide HOW to build what the Planner decides WHAT to build. Break execution plans into atomic stages, resolve dependencies, execute independently, and retry only failed stages.
 
 **Modules added:**
-- `streaming/__init__.py` — package exports
-- `streaming/stream_manager.py` — section-by-section streaming orchestrator
-- `streaming/token_stream.py` — real-time token streaming from Ollama
-- `streaming/progress_tracker.py` — section/file-level progress with timing
-- `streaming/output_renderer.py` — terminal rendering of streaming output
+- `execution/__init__.py` — package exports
+- `execution/execution_engine.py` — main orchestrator receiving plans from Planner
+- `execution/execution_context.py` — tracks current stage, completed stages, progress, elapsed time
+- `execution/dependency_manager.py` — builds and resolves directed acyclic dependency graphs
+- `execution/task_scheduler.py` — breaks execution plans into independently executable atomic stages
+- `execution/stage_executor.py` — dispatches to handlers for folder, file_gen, verify, repair, finalize stages
 
 **Architecture changes:**
-- New `streaming/` top-level module with 4 sub-modules
-- `IncrementalFileBuilder` integrated with `StreamManager` for live output
-- Continuous StateManager updates during streaming
-- Per-section timing and token-count tracking
+- New `execution/` top-level module with 6 sub-modules
+- Planner now delegates execution to ExecutionEngine instead of running a linear pipeline
+- Dependency graph ensures stages execute only after their dependencies complete
+- Per-stage failure recovery — only the failed stage is retried, never the entire project
+- Integration with StateManager for continuous stage tracking
+- Progress bar with percentage and stage label displayed during execution
 
-**Commit:** `f0b0799` (Model Router) + next commit (Streaming Engine)
-
-**Current completion:** ~45%
+**Current completion:** ~55%
 
 ### 2026-07-15 — Model Router (v4.0.0-alpha.2)
 
@@ -330,6 +337,14 @@ Steve-v4/
 │   ├── model_profiles.py     # 6 model profiles with capability registries
 │   ├── capabilities.py       # Capability taxonomy and stage mappings
 │   └── performance.py        # Model performance tracking and persistence
+│
+├── execution/                # Autonomous execution engine
+│   ├── __init__.py
+│   ├── execution_engine.py   # Main orchestrator — receives plans, executes stages
+│   ├── execution_context.py  # Stage tracking, progress, elapsed time
+│   ├── dependency_manager.py # Directed acyclic dependency graph
+│   ├── task_scheduler.py     # Atomic stage decomposition
+│   └── stage_executor.py     # Stage dispatcher (folder, file gen, verify, repair)
 │
 ├── streaming/                # Streaming generation engine
 │   ├── __init__.py
