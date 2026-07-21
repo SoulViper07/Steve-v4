@@ -12,6 +12,7 @@ from .project_state import ProjectState
 from .model_state import ModelState
 from .git_state import GitState
 from .verification_state import VerificationState
+from .repository_state import RepositoryState
 
 
 _STATE_DIR = ".steve" / Path("state")
@@ -23,6 +24,7 @@ _STATE_FILES = {
     "model": "model.json",
     "git": "git.json",
     "verification": "verification.json",
+    "repository": "repository.json",
 }
 
 
@@ -52,6 +54,7 @@ class StateManager:
         self.model = ModelState()
         self.git = GitState()
         self.verification = VerificationState()
+        self.repository = RepositoryState()
 
         self._recover()
 
@@ -97,6 +100,7 @@ class StateManager:
         self.model = ModelState()
         self.git = GitState()
         self.verification = VerificationState()
+        self.repository = RepositoryState()
         self.save()
 
     # ── Public API ───────────────────────────────────────────
@@ -240,6 +244,12 @@ class StateManager:
             self.verification.quality_score = quality
         self.save()
 
+    def update_repository(self, **kwargs):
+        for key, value in kwargs.items():
+            if hasattr(self.repository, key):
+                setattr(self.repository, key, value)
+        self.save()
+
     # ── Report ───────────────────────────────────────────────
 
     def summary_dict(self) -> Dict[str, Any]:
@@ -277,6 +287,15 @@ class StateManager:
                 "status": self.verification.status,
                 "score": self.verification.score,
                 "critical": self.verification.critical_count,
+            },
+            "repository": {
+                "indexed": self.repository.is_indexed,
+                "files": self.repository.total_files,
+                "symbols": self.repository.total_symbols,
+                "languages": list(self.repository.languages.keys()),
+                "frameworks": list(self.repository.frameworks.keys()),
+                "architecture": self.repository.architecture_type,
+                "summary": self.repository.summary[:100] if self.repository.summary else "",
             },
         }
 

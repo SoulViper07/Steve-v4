@@ -52,6 +52,10 @@ class ExecutionEngine:
         self._executor = StageExecutor(self._workdir, self._sm, self._renderer)
         self._pipeline: Optional[PipelineDisplay] = None
         self._aborted = threading.Event()
+        self._repo_context: Optional[Dict] = None
+
+    def set_repository_context(self, repo_summary: Dict):
+        self._repo_context = repo_summary
 
     @property
     def context(self) -> ExecutionContext:

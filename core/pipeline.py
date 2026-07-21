@@ -2,7 +2,7 @@ import os
 import re
 import time
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Dict
 
 from utils.git_integration import GitIntegration
 from utils.helpers import get_symbol
@@ -18,6 +18,7 @@ def run_pipeline(
     user_input: str,
     task_description: str = "",
     echo: bool = True,
+    repo_summary: Optional[Dict] = None,
 ) -> tuple[str, bool]:
     start_time = time.monotonic()
     pipeline = create_pipeline()
@@ -41,6 +42,12 @@ def run_pipeline(
             console.print(f"  [dim]Repository:[/dim] [green]{status.branch}[/green]  [dim]Modified:[/dim] {status.file_count_modified}  [dim]Untracked:[/dim] {status.file_count_untracked}")
             if status.last_commit_hash:
                 console.print(f"  [dim]Last commit:[/dim] [{status.last_commit_hash[:8]}] {status.last_commit_message}")
+
+    if repo_summary:
+        if _plain_terminal():
+            _info(f"Repository: {repo_summary.get('summary', '')}")
+        else:
+            console.print(f"  [dim]Repository:[/dim] {repo_summary.get('summary', '')}")
 
     plan_block = ""
     if hasattr(conv, 'last_plan') and conv.last_plan:

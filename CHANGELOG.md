@@ -7,6 +7,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [4.0.0-alpha.6] — 2026-07-21
+
+### Added
+- **Repository Intelligence Engine** — `repository/` module with 9 sub-modules for complete internal project representation
+- `RepositoryManager` — orchestrates scanning, indexing, semantic search, API route detection, unused code detection
+- `RepositoryScanner` — recursive file scanner with exclusion rules, entry point/config/asset/test/environment/build/package manager file classification
+- `ProjectGraph` — internal graph representation of folders, files, imports, dependencies, relationships, connected components
+- `SymbolIndex` — indexes functions, classes, methods, variables, constants, interfaces, types, modules, exports, imports across Python, JavaScript, TypeScript, HTML, CSS
+- `DependencyAnalyzer` — import/require/export/static asset dependency analysis for Python, JS/TS, HTML, CSS, Vue
+- `LanguageDetector` — 60+ language detection by file extension and well-known filenames
+- `FrameworkDetector` — 25+ framework detection (React, Vue, Svelte, Angular, Next.js, Django, Flask, FastAPI, Tailwind, Bootstrap, Spring Boot, Rails, Laravel, Express, and more)
+- `ArchitectureAnalyzer` — architecture pattern recognition: MVC, SPA, API, CLI, Microservice, Library, Package, Plugin, Monolith
+- `RepositoryState` — 7th sub-state in StateManager with JSON persistence to `.steve/state/repository.json`
+- Auto-scan on startup — "Scanning repository..." → "Indexed N files" → "Detected X" → "Repository ready"
+- CLI commands: `/repo-status`, `/repo-search <query>`, `/repo-routes`, `/repo-reindex`
+- Repository-aware Model Router — router accepts repo context for informed model selection
+- Repository-aware Execution Engine — accepts repo summary for indexed execution
+- Semantic search — find symbols, files, functions, classes by name query
+- API route finder — detects routes from Python decorators and JS/TS route registrations
+- Duplicate function detection across the entire codebase
+- Architecture recognition with primary type, secondary types, confidence scoring, and evidence list
+- Comprehensive test suite: 40+ tests covering scanner, graph, symbol index, dependency analyzer, language detector, framework detector, architecture analyzer
+
+### Changed
+- New `repository/` top-level module added to the architecture between CLI and Conversation Manager
+- StateManager now manages 7 sub-states (added `repository_state.py`)
+- Router includes repository context for better routing decisions
+- Pipeline displays repository summary during task execution
+- Architecture diagram updated to include Repository Intelligence layer
+- Roadmap updated: Phase 8 shifted to Repository Intelligence, subsequent phases renumbered
+- Module status table includes `repository/` as a new module with stable status
+- Project completion percentage updated from 65% to 75%
+
+---
+
 ## [4.0.0-alpha.5] — 2026-07-17
 
 ### Added

@@ -4,9 +4,9 @@
 
 Steve v4 is built in 11 phases. Each phase produces a working, testable increment.
 
-**Current phase:** 8 — Verifier
+**Current phase:** 9 — Verifier
 
-**Progress:** 65% — Foundation ✓, Planner ✓, State Manager ✓, Model Router ✓, Streaming ✓, Execution Engine ✓, Workspace Manager ✓
+**Progress:** 75% — Foundation ✓, Planner ✓, State Manager ✓, Model Router ✓, Streaming ✓, Execution Engine ✓, Workspace Manager ✓, Repository Intelligence ✓
 
 ---
 
@@ -153,6 +153,33 @@ Steve v4 is built in 11 phases. Each phase produces a working, testable incremen
 
 ---
 
+## Phase 8 — Repository Intelligence ✓
+
+*Build a complete internal representation of the project before editing anything.*
+
+- [x] `RepositoryManager` — orchestrates scanning, indexing, search, API route and unused code detection
+- [x] `RepositoryScanner` — recursive file scanner with exclusion rules, entry point/config/asset/test classification
+- [x] `ProjectGraph` — internal graph of folders, files, and dependency relationships with connected components
+- [x] `SymbolIndex` — indexes functions, classes, methods, variables, constants, interfaces, types, imports across Python, JS/TS, HTML, CSS
+- [x] `DependencyAnalyzer` — import/require/export/asset analysis for Python, JS/TS, HTML, CSS, Vue
+- [x] `LanguageDetector` — 60+ language detection by extension and filename
+- [x] `FrameworkDetector` — 25+ framework detection via files, patterns, and extensions (React, Vue, Svelte, Angular, Django, Flask, FastAPI, Tailwind, Bootstrap, etc.)
+- [x] `ArchitectureAnalyzer` — pattern recognition: MVC, SPA, API, CLI, Microservice, Library, Package, Plugin, Monolith
+- [x] `RepositoryState` — 7th StateManager sub-state with JSON persistence
+- [x] Auto-scan on startup with CLI display: "Scanning repository..." → "Indexed N files" → "Detected X" → "Repository ready"
+- [x] CLI commands: `/repo-status`, `/repo-search <query>`, `/repo-routes`, `/repo-reindex`
+- [x] Repository-aware Model Router and Execution Engine
+- [x] Semantic search across all indexed symbols
+- [x] API route finder (Python decorators, JS/TS routes)
+- [x] Duplicate function detection
+- [x] Architecture summary with confidence scoring
+
+**Deliverable:** Steve builds a complete internal model of every repository before any edit, enabling informed decisions based on indexed knowledge.
+
+---
+
+## Phase 9 — Verifier ⏳
+
 *Implement multi-dimensional verification and quality scoring.*
 
 - [ ] File existence and size verification
@@ -168,7 +195,7 @@ Steve v4 is built in 11 phases. Each phase produces a working, testable incremen
 
 ---
 
-## Phase 9 — Repair Engine ⏳
+## Phase 10 — Repair Engine ⏳
 
 *Implement failure analysis, retry strategies, and automatic repair.*
 
@@ -184,7 +211,7 @@ Steve v4 is built in 11 phases. Each phase produces a working, testable incremen
 
 ---
 
-## Phase 10 — Project Memory ⏳
+## Phase 11 — Project Memory ⏳
 
 *Implement persistent project state across sessions.*
 
@@ -203,7 +230,7 @@ Steve v4 is built in 11 phases. Each phase produces a working, testable incremen
 
 ---
 
-## Phase 11 — Plugins ⏳
+## Phase 12 — Plugins ⏳
 
 *Create a plugin system for custom generators, verifiers, and integrations.*
 
@@ -219,7 +246,7 @@ Steve v4 is built in 11 phases. Each phase produces a working, testable incremen
 
 ---
 
-## Phase 12 — Live Terminal ⏳
+## Phase 13 — Live Terminal ⏳
 
 *Enhance the terminal UI with real-time pipeline visualization.*
 
@@ -236,7 +263,7 @@ Steve v4 is built in 11 phases. Each phase produces a working, testable incremen
 
 ---
 
-## Phase 13 — Stable Release ⏳
+## Phase 14 — Stable Release ⏳
 
 *Polish, test, document, and release Steve v4.0.0 stable.*
 

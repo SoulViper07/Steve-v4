@@ -147,6 +147,14 @@ class IntelligentRouter:
         self._overrides = overrides or load_overrides_from_env()
         apply_overrides(self._overrides)
         _load_category_stages()
+        self._repo_context: Optional[Dict] = None
+
+    def set_repository_context(self, repo_summary: Dict):
+        self._repo_context = repo_summary
+
+    @property
+    def repo_context(self) -> Optional[Dict]:
+        return self._repo_context
 
     @property
     def tracker(self) -> PerformanceTracker:

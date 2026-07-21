@@ -14,22 +14,23 @@ Steve v4 delivers on that vision by making every subsystem a first-class citizen
 
 ---
 
-## Latest Milestone: Workspace & File System Manager
+## Latest Milestone: Repository Intelligence Engine
 
-**v4.0.0-alpha.5** — Centralized workspace manager responsible for all filesystem operations.
+**v4.0.0-alpha.6** — Complete internal representation of the project before any edit.
 
-Steve now understands projects instead of blindly writing files. The WorkspaceManager is the only component allowed to perform filesystem operations — it creates, reads, updates, renames, moves, deletes, backs up, and restores files. It maintains an in-memory project index tracking every file's type, language, dependencies, generation status, and verification status. Smart writes compare existing content before overwriting, and surgical edits apply minimal patches when possible.
+Steve now builds a complete internal model of the repository before modifying anything. The Repository Intelligence Engine scans files, detects languages and frameworks, builds a project graph, indexes all symbols (functions, classes, methods, variables), analyzes dependencies, and recognizes the architecture pattern (MVC, SPA, API, CLI, Microservice). Every edit decision is informed by indexed knowledge rather than raw filesystem scans.
 
 ---
 
 ## Features
 
+- **Repository Intelligence** — complete internal representation: scans files, detects 60+ languages and 25+ frameworks, builds project graph, indexes all symbols (functions, classes, methods, variables, interfaces, types), analyzes import dependencies, recognizes architecture (MVC, SPA, API, CLI, Microservice). `/repo-status`, `/repo-search`, `/repo-routes`, `/repo-reindex` CLI commands.
 - **Conversational-first** — chat, explain, debug, plan, and brainstorm in natural language. No action tags needed for discussion.
 - **Autonomous action** — build, create, fix, refactor, and generate projects via action tags. Infer operational intent automatically.
 - **Execution Engine** — receives plans from Planner, decomposes work into atomic stages, resolves dependencies via directed acyclic graph, executes each stage independently, retries only failed stages.
 - **Workspace Manager** — centralized filesystem authority: creates, reads, updates, renames, moves, deletes, backs up, restores files. Smart writes, surgical edits, change detection, language/framework detection, file dependency graph.
-- **Git as backbone** — auto-initialize repo, checkpoint before every task, auto-commit on verification pass, rollback, undo, branch management. 13 Git commands available.
-- **Intelligent model routing** — capability-based model selection across 6 models. Three routing modes (quality, performance, balanced). Configurable overrides. Performance tracking and feedback.
+- **Git as backbone** — auto-initialize repo, checkpoint before every task, auto-commit on verification pass, rollback, undo, branch management. 16 Git commands available.
+- **Intelligent model routing** — capability-based model selection across 6 models. Three routing modes (quality, performance, balanced). Configurable overrides. Performance tracking and feedback. Repository-aware routing.
 - **Live streaming generation** — real-time token display during file generation. Per-section progress with timing. Never appears frozen.
 - **Multi-model pipeline** — routes each pipeline stage to the optimal model via capability matching (Qwen3:14b, Qwen2.5-Coder, Mistral-Small, Llama3, Deepseek-Coder).
 - **Planned architecture** — modular pipeline with conversation manager, task analyzer, planner, architecture planner, model router, UI designer, execution engine, streaming generator, file writer, verifier, repair engine, quality reviewer, and final report.
@@ -47,7 +48,10 @@ Steve now understands projects instead of blindly writing files. The WorkspaceMa
 ```
 ┌───────────────────────────────────────────────────────────┐
 │                        CLI (agent.py)                      │
-│     argparse, REPL loop, 13 Git commands, UTF-8 bootstrap  │
+│     argparse, REPL loop, 16 Git commands, UTF-8 bootstrap  │
+├───────────────────────────────────────────────────────────┤
+│                  Repository Intelligence                    │
+│   Scanner → Graph → Symbol Index → Dependency → Arch      │
 ├───────────────────────────────────────────────────────────┤
 │                   Conversation Manager                     │
 │         Message history, file context, session state       │
@@ -62,7 +66,7 @@ Steve now understands projects instead of blindly writing files. The WorkspaceMa
 │         Component tree, file map, dependency analysis      │
 ├───────────────────────────────────────────────────────────┤
 │                      Model Router                          │
-│    Capability-based routing, 6 profiles, 3 modes, overrides│
+│    Capability-based routing + repository context           │
 ├───────────────────────────────────────────────────────────┤
 │               UI Designer (Mistral-Small)                   │
 │      Visual identity, layout archetypes, design tokens     │
@@ -99,13 +103,14 @@ Steve now understands projects instead of blindly writing files. The WorkspaceMa
 
 | Module | Status | Description |
 |--------|--------|-------------|
+| `repository/` | ✓ New | Repository Intelligence: scanner, graph, symbol index, dependency analyzer, language/framework/architecture detection |
 | `config/` | ✓ Stable | Settings, model config, routing rules |
 | `core/` | ✓ Stable | Pipeline, planner, conversation, file context |
-| `state/` | ✓ Stable | StateManager — 6 sub-states, JSON persistence |
+| `state/` | ✓ Stable | StateManager — 7 sub-states incl. repository state, JSON persistence |
 | `planner/` | ✓ Stable | 4 sub-planners, structured CompletePlan |
-| `router/` | ✓ Stable | IntelligentRouter, 6 profiles, capability matching |
+| `router/` | ✓ Stable | IntelligentRouter, 6 profiles, capability matching, repository-aware |
 | `execution/` | ✓ Stable | ExecutionEngine, atomic stage decomposition, dependency graph, per-stage retry |
-| `workspace/` | ✓ New | WorkspaceManager, file CRUD, smart writes, change detection, project index |
+| `workspace/` | ✓ Stable | WorkspaceManager, file CRUD, smart writes, change detection, project index |
 | `streaming/` | ✓ Stable | Live token streaming, progress tracking, real-time display |
 | `providers/` | ✓ Stable | Ollama API client (streaming, warming) |
 | `actions/` | ✓ Stable | Action tag parser/executor |
@@ -219,12 +224,13 @@ python agent.py --plain
 | 5 | Streaming Generator — live token display, progress tracking | ✓ Complete |
 | 6 | Execution Engine — atomic stage decomposition, dependency graph, per-stage retry | ✓ Complete |
 | 7 | Workspace Manager — centralized filesystem authority, project index, smart writes | ✓ Complete |
-| 8 | Verifier — syntax checks, quality scoring | ⏳ Next |
-| 9 | Repair Engine — failure analysis, retry strategies | ⏳ Next |
-| 10 | Project Memory — .steve artifact persistence | ⏳ Next |
-| 11 | Plugins — custom generators, integrations | Future |
-| 12 | Live Terminal — enhanced real-time pipeline UI | Future |
-| 13 | Stable Release — v4.0.0 stable | Future |
+| 8 | Repository Intelligence — scanner, graph, symbol index, dependency analyzer, architecture detection | ✓ Complete |
+| 9 | Verifier — syntax checks, quality scoring | ⏳ Next |
+| 10 | Repair Engine — failure analysis, retry strategies | ⏳ Next |
+| 11 | Project Memory — .steve artifact persistence | ⏳ Next |
+| 12 | Plugins — custom generators, integrations | Future |
+| 13 | Live Terminal — enhanced real-time pipeline UI | Future |
+| 14 | Stable Release — v4.0.0 stable | Future |
 
 See [ROADMAP.md](./ROADMAP.md) for full details.
 
@@ -232,33 +238,35 @@ See [ROADMAP.md](./ROADMAP.md) for full details.
 
 ## Development Log
 
-### 2026-07-17 — Workspace & File System Manager (v4.0.0-alpha.5)
+### 2026-07-21 — Repository Intelligence Engine (v4.0.0-alpha.6)
 
-**Purpose:** Give Steve true project awareness. WorkspaceManager becomes the single authority for all filesystem operations — no other module writes directly to disk.
+**Purpose:** Before Steve edits anything, it must understand the repository. Build a complete internal representation of the project.
 
 **Modules added:**
-- `workspace/__init__.py` — package exports
-- `workspace/workspace_manager.py` — main orchestrator, integrates all subsystems
-- `workspace/project_tree.py` — directory tree scanner with exclusion support
-- `workspace/file_manager.py` — file CRUD, backups, smart writes, surgical edits (exact/WS-normalized/fuzzy)
-- `workspace/file_tracker.py` — in-memory project index: 40+ languages, framework detection, generation/verification status
-- `workspace/dependency_graph.py` — file-level import analysis for Python, JS, TS, HTML, CSS
-- `workspace/change_detector.py` — detects added, modified, deleted, and moved files
-- `workspace/path_resolver.py` — absolute/relative path resolution, exclusion rules, glob support
+- `repository/__init__.py` — package exports for all 9 sub-modules
+- `repository/repository_manager.py` — main orchestrator: scan, index, search, API route detection, unused code detection
+- `repository/repository_scanner.py` — recursive file scanner with exclusion rules, entry point/config/asset/test classification
+- `repository/project_graph.py` — internal graph of folders, files, and dependency relationships with connected components
+- `repository/symbol_index.py` — indexes functions, classes, methods, variables, constants, interfaces, types, imports across Python, JS/TS, HTML, CSS
+- `repository/dependency_analyzer.py` — import/require/export/asset analysis for Python, JS/TS, HTML, CSS, Vue
+- `repository/language_detector.py` — 60+ language detection by extension and filename
+- `repository/framework_detector.py` — 25+ framework detection via files, patterns, and extensions
+- `repository/architecture_analyzer.py` — architecture pattern detection: MVC, SPA, API, CLI, Microservice, Library, Package, Plugin, Monolith
 
 **Architecture changes:**
-- New `workspace/` top-level module with 8 sub-modules
-- WorkspaceManager replaces direct filesystem access across the codebase
-- Project index tracks every file's path, type, language, size, line count, dependencies, generation status, verification status
-- Smart writes compare existing content before overwriting — no unnecessary churn
-- Surgical edits try exact match, whitespace-normalized match, then fuzzy match before falling back to full overwrite
-- Change detection snapshots index state and detects added/modified/deleted/moved files in one pass
-- Language detection covers 40+ file extensions
-- Framework detection identifies Flask, Django, FastAPI, React, Vue, Svelte, Express, Next.js, Tailwind, Bootstrap
-- Backup/restore system stores timestamped backups in `.steve/backups/`
-- Continuous StateManager integration for project tree and file tracking
+- New `repository/` top-level module with 9 sub-modules
+- Repository scans run automatically on startup: "Scanning repository..." → "Indexed N files" → "Detected X" → "Repository ready"
+- New `RepositoryState` in StateManager (7th sub-state) — persists repo intelligence to `.steve/state/repository.json`
+- Router is repository-aware — accepts repo context for informed model selection
+- Execution Engine is repository-aware — accepts repo summary for indexed execution
+- CLI: `/repo-status`, `/repo-search <query>`, `/repo-routes`, `/repo-reindex` commands
+- Pipeline displays repository summary on task execution
+- Semantic search across all indexed symbols by name
+- API route finder detects routes from Python decorators and JS/TS route registrations
+- Duplicate function detection across the entire codebase
+- Architecture analysis produces primary type, confidence score, evidence, and component list
 
-**Current completion:** ~65%
+**Current completion:** ~75%
 
 **Purpose:** Decide HOW to build what the Planner decides WHAT to build. Break execution plans into atomic stages, resolve dependencies, execute independently, and retry only failed stages.
 
@@ -323,6 +331,17 @@ Steve-v4/
 ├── agent.py                  # CLI entry point — REPL, commands, bootstrap
 ├── steve.bat / steve.cmd     # Windows launcher scripts
 │
+├── repository/               # Repository Intelligence Engine
+│   ├── __init__.py
+│   ├── repository_manager.py # Main orchestrator: scan, index, search, route detection
+│   ├── repository_scanner.py # Recursive file scanner with exclusion rules
+│   ├── project_graph.py      # Internal graph: folders, files, dependencies
+│   ├── symbol_index.py       # Symbol index: functions, classes, methods, interfaces
+│   ├── dependency_analyzer.py# Import/export/asset dependency analysis
+│   ├── language_detector.py  # 60+ language detection
+│   ├── framework_detector.py # 25+ framework detection
+│   └── architecture_analyzer.py # Architecture pattern recognition
+│
 ├── config/                   # Configuration layer
 │   ├── settings.py           # Environment variables, presets, prompts
 │   ├── model_config.py       # Model roles, stage-to-role mapping
@@ -341,13 +360,14 @@ Steve-v4/
 │
 ├── state/                    # State management subsystem
 │   ├── __init__.py
-│   ├── state_manager.py      # StateManager singleton with 6 sub-states
+│   ├── state_manager.py      # StateManager singleton with 7 sub-states
 │   ├── execution_state.py    # Task execution tracking
 │   ├── task_state.py         # Task classification and metadata
 │   ├── project_state.py      # Project file and component tracking
 │   ├── model_state.py        # Model history and current model
 │   ├── git_state.py          # Git status and commit tracking
-│   └── verification_state.py # Verification results and repair tracking
+│   ├── verification_state.py # Verification results and repair tracking
+│   └── repository_state.py   # Repository intelligence state
 │
 ├── planner/                  # Modular planning subsystem
 │   ├── __init__.py
@@ -423,6 +443,13 @@ Steve-v4/
 │   ├── architecture.md       # Detailed architecture reference
 │   ├── git-integration.md    # Git subsystem reference
 │   └── development.md        # Development guide
+│
+├── tests/                    # Test suite
+│   ├── __init__.py
+│   ├── test_repository.py    # Repository Intelligence tests
+│   ├── test_workspace.py     # Workspace manager tests
+│   ├── test_verifier.py      # Verifier tests
+│   └── test_patcher.py       # Patcher tests
 │
 ├── requirements.txt          # Python dependencies
 ├── README.md                 # This file

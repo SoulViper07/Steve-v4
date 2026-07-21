@@ -5,6 +5,7 @@ from .project_state import ProjectState
 from .model_state import ModelState
 from .git_state import GitState
 from .verification_state import VerificationState
+from .repository_state import RepositoryState
 
 __all__ = [
     "StateManager",
@@ -16,4 +17,5 @@ __all__ = [
     "ModelState",
     "GitState",
     "VerificationState",
+    "RepositoryState",
 ]

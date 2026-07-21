@@ -20,6 +20,7 @@ from ui.terminal_renderer import (
     console, _plain_terminal, _info, _ok, _err, _warn, _step,
     get_symbol,
 )
+from rich.table import Table
 from config.settings import STEVE_NAME, AGENT_VERSION, PLAIN_UI
 
 
@@ -38,6 +39,12 @@ def print_help():
         f"\n{STEVE_NAME} commands:",
         "  /help              Show this help",
         "  /exit, /quit       Exit",
+        "",
+        "Repository:",
+        "  /repo-status       Show repository intelligence summary",
+        "  /repo-search <q>   Semantic search across indexed symbols",
+        "  /repo-routes       Find all API routes",
+        "  /repo-reindex      Force re-index the repository",
         "",
         "Router:",
         "  /route <request>   Analyze and display model routing decisions",
@@ -270,13 +277,16 @@ def cmd_run(command: str):
         _err(str(e))
 
 
-def cmd_plan(request: str):
+def cmd_plan(request: str, repo_manager=None):
     from pathlib import Path
     from state import get_state_manager
+    from planner import PlanningEngine
     workdir = Path.cwd().resolve()
     sm = get_state_manager(workdir)
     sm.initialize_task(request)
     engine = PlanningEngine(workdir, state_manager=sm)
+    if repo_manager and repo_manager.is_indexed:
+        engine.set_repository_context(repo_manager.summary_dict())
     plan = engine.plan(request)
     if plan:
         _ok(f"Plan [{plan.task_id}] saved to .steve/plans/{plan.task_id}/")
@@ -284,14 +294,149 @@ def cmd_plan(request: str):
         _err("Planning failed.")
 
 
-def cmd_route(request: str):
+def cmd_route(request: str, repo_manager=None):
     from router import get_router, route_task
-    pipeline = route_task(request)
+    router = get_router()
+    if repo_manager and repo_manager.is_indexed:
+        router.set_repository_context(repo_manager.summary_dict())
+    pipeline = router.get_pipeline_for_task(request)
     if pipeline and pipeline.steps:
         _ok(f"Routing completed: {pipeline.total_steps} stage(s)")
     else:
         _err("Routing failed.")
     _info("Override with: always_use=<model>, prefer=<model>, disabled=<model>, mode=performance|quality|balanced")
+
+
+def cmd_repo_status(repo_manager):
+    if not repo_manager or not repo_manager.is_indexed:
+        _warn("Repository not indexed. Run /repo-reindex first.")
+        return
+    ctx = repo_manager.context
+    if _plain_terminal():
+        print(f"\n[Repository Intelligence]")
+        print(f"  Files: {ctx.total_files} | Dirs: {ctx.total_dirs} | Symbols: {ctx.total_symbols}")
+        print(f"  Languages: {', '.join(ctx.languages.keys())}")
+        print(f"  Frameworks: {', '.join(ctx.frameworks.keys())}")
+        if ctx.architecture:
+            print(f"  Architecture: {ctx.architecture.primary_type.value} ({round(ctx.architecture.confidence * 100)}%)")
+        print(f"  Entry points: {len(ctx.entry_points)} | Configs: {len(ctx.config_files)} | Tests: {len(ctx.test_files)}")
+        print(f"  Dependencies: {ctx.dependency_count}")
+        if ctx.duplicate_functions:
+            print(f"  Duplicate functions: {ctx.duplicate_functions}")
+        print(f"  Duration: {ctx.duration_ms}ms")
+        print(f"  Summary: {ctx.summary}")
+    else:
+        sym = get_symbol("📊", "[Repo]")
+        console.print(f"\n  [bold]{sym} Repository Intelligence[/bold]")
+        table = Table(show_header=False, box=None, padding=(0, 2))
+        table.add_column("Key", style="dim")
+        table.add_column("Value", style="green")
+        table.add_row("Files", f"{ctx.total_files}")
+        table.add_row("Directories", f"{ctx.total_dirs}")
+        table.add_row("Symbols Indexed", f"{ctx.total_symbols}")
+        table.add_row("Languages", ", ".join(ctx.languages.keys()))
+        table.add_row("Frameworks", ", ".join(ctx.frameworks.keys()))
+        if ctx.architecture:
+            table.add_row("Architecture", f"{ctx.architecture.primary_type.value} ({round(ctx.architecture.confidence * 100)}%)")
+        table.add_row("Entry Points", f"{len(ctx.entry_points)}")
+        table.add_row("Config Files", f"{len(ctx.config_files)}")
+        table.add_row("Test Files", f"{len(ctx.test_files)}")
+        table.add_row("Dependencies", f"{ctx.dependency_count}")
+        if ctx.duplicate_functions:
+            table.add_row("Duplicates", f"{ctx.duplicate_functions}")
+        table.add_row("Scan Duration", f"{ctx.duration_ms}ms")
+        console.print(table)
+        if ctx.summary:
+            console.print(f"  [dim]{ctx.summary}[/dim]")
+        console.print()
+
+def cmd_repo_search(repo_manager, query):
+    if not repo_manager or not repo_manager.is_indexed:
+        _warn("Repository not indexed. Run /repo-reindex first.")
+        return
+    results = repo_manager.search(query)
+    total = len(results["symbols"]) + len(results["files"])
+    if total == 0:
+        _info(f"No results for '{query}'")
+        return
+    _ok(f"Found {len(results['symbols'])} symbol(s), {len(results['files'])} file(s) for '{query}'")
+    for sym in results["symbols"][:15]:
+        if _plain_terminal():
+            print(f"  [{sym['kind']}] {sym['name']}  ({sym['file']}:{sym['line']})")
+        else:
+            console.print(f"    [cyan]{sym['kind']:>10}[/cyan] [green]{sym['name']}[/green] [dim]{sym['file']}:{sym['line']}[/dim]")
+    for f in results["files"][:10]:
+        if _plain_terminal():
+            print(f"  [file] {f}")
+        else:
+            console.print(f"    [yellow]file[/yellow] [dim]{f}[/dim]")
+    if total > 25:
+        _info(f"... and {total - 25} more results")
+
+def cmd_repo_routes(repo_manager):
+    if not repo_manager or not repo_manager.is_indexed:
+        _warn("Repository not indexed. Run /repo-reindex first.")
+        return
+    routes = repo_manager.find_api_routes()
+    if not routes:
+        _info("No API routes found")
+        return
+    _ok(f"Found {len(routes)} API route(s)")
+    for r in routes[:30]:
+        if _plain_terminal():
+            print(f"  {r['method']:6} {r['path']:40} ({r['file']}:{r['line']})")
+        else:
+            method_colors = {"GET": "green", "POST": "yellow", "PUT": "blue", "DELETE": "red", "PATCH": "magenta"}
+            color = method_colors.get(r["method"], "white")
+            console.print(f"    [{color}]{r['method']:6}[/{color}] [bold]{r['path']}[/bold] [dim]{r['file']}:{r['line']}[/dim]")
+    if len(routes) > 30:
+        _info(f"... and {len(routes) - 30} more routes")
+
+def cmd_repo_reindex(repo_manager):
+    _step("Re-indexing repository...")
+    ctx = repo_manager.reindex()
+    _ok(f"Re-indexed {ctx.total_files} files, {ctx.total_symbols} symbols in {ctx.duration_ms}ms")
+    if _plain_terminal():
+        print(f"  {ctx.summary}")
+    else:
+        console.print(f"  [dim]{ctx.summary}[/dim]")
+
+def run_repository_scan(repo_manager, state_manager):
+    _step("Scanning repository...")
+    ctx = repo_manager.index()
+    state_manager.update_repository(
+        is_indexed=True,
+        total_files=ctx.total_files,
+        total_dirs=ctx.total_dirs,
+        total_symbols=ctx.total_symbols,
+        languages=ctx.languages,
+        frameworks=ctx.frameworks,
+        architecture_type=ctx.architecture.primary_type.value if ctx.architecture else "",
+        architecture_confidence=ctx.architecture.confidence if ctx.architecture else 0.0,
+        architecture_description=ctx.architecture.description if ctx.architecture else "",
+        entry_points=ctx.entry_points,
+        config_files=ctx.config_files,
+        test_files=ctx.test_files,
+        assets=ctx.assets,
+        dependency_count=ctx.dependency_count,
+        duplicate_functions=ctx.duplicate_functions,
+        summary=ctx.summary,
+        scanned_at=ctx.scanned_at,
+    )
+    _ok(f"Indexed {ctx.total_files} files")
+    if ctx.languages:
+        top_langs = sorted(ctx.languages.items(), key=lambda x: -x[1].get("percentage", 0))[:3]
+        for lang, info in top_langs:
+            _info(f"Detected {lang}")
+    if ctx.frameworks:
+        for fw, info in ctx.frameworks.items():
+            if info.get("confidence", 0) >= 0.5:
+                _info(f"Detected {fw}")
+    _info(f"Found {ctx.total_symbols} symbols")
+    if ctx.architecture and ctx.architecture.primary_type.value != "unknown":
+        _info(f"Architecture: {ctx.architecture.primary_type.value}")
+    _ok("Repository ready")
+    return ctx
 
 
 def main():
@@ -309,12 +454,19 @@ def main():
     git = GitIntegration(workdir)
     git_ok, git_msg = git.initialize(auto_init=True)
 
+    from state import get_state_manager
+    sm = get_state_manager(workdir)
+    from repository import RepositoryManager
+    repo_manager = RepositoryManager(str(workdir))
+
     print_banner()
 
     if git_ok:
         _ok(git_msg)
     else:
         _warn(git_msg)
+
+    run_repository_scan(repo_manager, sm)
 
     if _plain_terminal():
         print(f"\nTalk to {STEVE_NAME} or type /help for commands.\n")
@@ -370,12 +522,20 @@ def main():
                 cmd_git_push(git, arg)
             elif cmd == "git-release":
                 cmd_git_release(git, arg)
+            elif cmd == "repo-status":
+                cmd_repo_status(repo_manager)
+            elif cmd == "repo-search":
+                cmd_repo_search(repo_manager, arg) if arg else _err("Query required. Usage: /repo-search <query>")
+            elif cmd == "repo-routes":
+                cmd_repo_routes(repo_manager)
+            elif cmd == "repo-reindex":
+                cmd_repo_reindex(repo_manager)
             elif cmd == "run":
                 cmd_run(arg)
             elif cmd == "reset":
                 _ok("Conversation reset.")
             elif cmd == "plan":
-                cmd_plan(arg)
+                cmd_plan(arg, repo_manager)
             elif cmd == "router-mode":
                 from router import set_mode
                 set_mode(arg) if arg else _err("Mode required (performance|quality|balanced)")
@@ -393,7 +553,7 @@ def main():
                 disable_model(arg) if arg else _err("Model name required")
                 _ok(f"Disabled model: {arg}")
             elif cmd in ("route", "router"):
-                cmd_route(arg)
+                cmd_route(arg, repo_manager)
             elif cmd in ("ls",):
                 try:
                     target = Path(arg).resolve() if arg else workdir
@@ -407,7 +567,8 @@ def main():
                 _err(f"Unknown command: /{cmd}  Use /help")
         else:
             from core.pipeline import run_pipeline
-            run_pipeline(None, raw, task_description=raw, echo=True)
+            run_pipeline(None, raw, task_description=raw, echo=True,
+                         repo_summary=repo_manager.summary_dict() if repo_manager and repo_manager.is_indexed else None)
 
 
 if __name__ == "__main__":
