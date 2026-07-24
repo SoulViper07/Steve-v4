@@ -35,11 +35,12 @@ class ChangeDetector:
 
     def detect(self, current_files: Set[str]) -> List[FileChange]:
         changes: List[FileChange] = []
-        tracked = set(self._tracker.all_files)
-        current = current_files
+        snapshot_paths = set(self._previous_snapshot.keys())
 
-        added = current - tracked
-        deleted = tracked - current
+        added = current_files - snapshot_paths
+        deleted = snapshot_paths - current_files
+
+        tracked_set = set(self._tracker.all_files)
 
         for path in sorted(added):
             entry = self._tracker.get(path)
@@ -59,7 +60,7 @@ class ChangeDetector:
                 old_checksum=prev[1] if prev else "",
             ))
 
-        for path in sorted(tracked & current):
+        for path in sorted(tracked_set & current_files):
             entry = self._tracker.get(path)
             prev = self._previous_snapshot.get(path)
             if entry and prev:

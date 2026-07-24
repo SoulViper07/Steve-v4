@@ -56,7 +56,7 @@ class FileManager:
         abs_new.parent.mkdir(parents=True, exist_ok=True)
         abs_old.rename(abs_new)
         self._tracker.untrack(old_path)
-        self._tracker.undrack(new_path)
+        self._tracker.track(abs_new, self._resolver.root)
         self._tracker.track(abs_new, self._resolver.root)
         return True, f"Renamed {old_path} -> {new_path}"
 

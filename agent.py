@@ -22,6 +22,7 @@ from ui.terminal_renderer import (
 )
 from rich.table import Table
 from config.settings import STEVE_NAME, AGENT_VERSION, PLAIN_UI
+from release import ReleaseManager
 
 
 def print_banner():
@@ -71,6 +72,11 @@ def print_help():
         "Planning & Routing:",
         "  /plan <request>    Analyze a request and produce an execution plan",
         "  /route <request>   Show routing decisions for a request",
+        "",
+        "Release Management:",
+        "  /release status    Show current release status",
+        "  /release list      Show release history",
+        "  /release <type> <name>  Create a new release (alpha|beta|rc|stable|major|minor|patch)",
         "",
         "Other commands:",
         "  /run <cmd>         Run a shell command",
@@ -263,6 +269,38 @@ def cmd_git_release(git: GitIntegration, tag: str):
         _ok(msg)
     else:
         _err(msg)
+
+
+def cmd_release(workdir: Path, arg: str):
+    parts = arg.strip().split(None, 1) if arg.strip() else []
+    if not parts:
+        _err("Usage: /release <type> [name]")
+        _info("Types: alpha, beta, rc, stable, major, minor, patch")
+        _info("Or: /release status, /release list")
+        return
+
+    subcmd = parts[0].lower()
+    name_arg = parts[1] if len(parts) > 1 else ""
+
+    release_mgr = ReleaseManager(workdir)
+
+    if subcmd == "status":
+        print()
+        _step(release_mgr.status())
+        return
+
+    if subcmd == "list":
+        print()
+        _step(release_mgr.list_releases())
+        return
+
+    valid_types = {"alpha", "beta", "rc", "stable", "major", "minor", "patch"}
+    if subcmd not in valid_types:
+        _err(f"Unknown release type: {subcmd}")
+        _info("Valid: alpha, beta, rc, stable, major, minor, patch, status, list")
+        return
+
+    release_mgr.prepare(release_type=subcmd, name=name_arg)
 
 
 def cmd_run(command: str):
@@ -522,6 +560,8 @@ def main():
                 cmd_git_push(git, arg)
             elif cmd == "git-release":
                 cmd_git_release(git, arg)
+            elif cmd == "release":
+                cmd_release(workdir, arg)
             elif cmd == "repo-status":
                 cmd_repo_status(repo_manager)
             elif cmd == "repo-search":

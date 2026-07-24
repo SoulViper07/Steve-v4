@@ -13,14 +13,13 @@ A locally-run, privacy-preserving, autonomous pair programmer that does not just
 Steve v4 delivers on that vision by making every subsystem a first-class citizen with a clear API and single responsibility.
 
 ---
+## Latest Milestone: Release Management System
 
-## Latest Milestone: Repository Intelligence Engine
+**4.0.0-alpha.7** — Automatic semantic versioning, milestone tracking, changelog generation, and release automation.
 
-**v4.0.0-alpha.6** — Complete internal representation of the project before any edit.
+Modules added:
+- `release/`
 
-Steve now builds a complete internal model of the repository before modifying anything. The Repository Intelligence Engine scans files, detects languages and frameworks, builds a project graph, indexes all symbols (functions, classes, methods, variables), analyzes dependencies, and recognizes the architecture pattern (MVC, SPA, API, CLI, Microservice). Every edit decision is informed by indexed knowledge rather than raw filesystem scans.
-
----
 
 ## Features
 
@@ -104,6 +103,7 @@ Steve now builds a complete internal model of the repository before modifying an
 | Module | Status | Description |
 |--------|--------|-------------|
 | `repository/` | ✓ New | Repository Intelligence: scanner, graph, symbol index, dependency analyzer, language/framework/architecture detection |
+| `release/` | ✓ New | Release & Version Management: version manager, milestone tracker, changelog generator, tag manager |
 | `config/` | ✓ Stable | Settings, model config, routing rules |
 | `core/` | ✓ Stable | Pipeline, planner, conversation, file context |
 | `state/` | ✓ Stable | StateManager — 7 sub-states incl. repository state, JSON persistence |
@@ -286,7 +286,7 @@ See [ROADMAP.md](./ROADMAP.md) for full details.
 - Integration with StateManager for continuous stage tracking
 - Progress bar with percentage and stage label displayed during execution
 
-**Current completion:** ~65%
+**Current completion:** ~75%
 
 ### 2026-07-15 — Model Router (v4.0.0-alpha.2)
 
@@ -308,7 +308,7 @@ See [ROADMAP.md](./ROADMAP.md) for full details.
 
 **Commit:** `f0b0799`
 
-**Current completion:** ~30%
+**Current completion:** ~75%
 
 ### 2026-07-14 — Foundation & Core Pipeline (v4.0.0-alpha.1)
 
@@ -320,7 +320,16 @@ See [ROADMAP.md](./ROADMAP.md) for full details.
 
 **Commit:** `72b233f`
 
-**Current completion:** ~15%
+**Current completion:** ~75%
+
+---
+
+### 2026-07-24 — Release Management System (4.0.0-alpha.7)
+
+**Purpose:** Automatic semantic versioning, milestone tracking, changelog generation, and release automation.
+
+**Modules added:**
+- `release/`
 
 ---
 
@@ -330,6 +339,14 @@ See [ROADMAP.md](./ROADMAP.md) for full details.
 Steve-v4/
 ├── agent.py                  # CLI entry point — REPL, commands, bootstrap
 ├── steve.bat / steve.cmd     # Windows launcher scripts
+│
+├── release/                  # Release & Version Management
+│   ├── __init__.py
+│   ├── release_manager.py    # Main orchestrator
+│   ├── version_manager.py    # Semantic versioning
+│   ├── milestone_manager.py  # Milestone tracking
+│   ├── changelog_manager.py  # Changelog generation
+│   └── tag_manager.py        # Git tagging
 │
 ├── repository/               # Repository Intelligence Engine
 │   ├── __init__.py

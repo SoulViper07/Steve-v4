@@ -7,7 +7,7 @@ OUTPUT_MODE = os.environ.get("STEVE_OUTPUT", "clean").strip().lower()
 if OUTPUT_MODE not in {"clean", "verbose", "debug"}:
     OUTPUT_MODE = "clean"
 
-AGENT_VERSION = "4.0.0"
+AGENT_VERSION = "4.0.0-alpha.7"
 
 OLLAMA_BASE = os.environ.get("OLLAMA_HOST", "http://localhost:11434")
 

@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ---
 
+
+## [4.0.0-alpha.7] — 2026-07-24
+
+### Added
+- release/
+
+---
 ## [4.0.0-alpha.6] — 2026-07-21
 
 ### Added
@@ -41,7 +48,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - Project completion percentage updated from 65% to 75%
 
 ---
-
 ## [4.0.0-alpha.5] — 2026-07-17
 
 ### Added
@@ -66,7 +72,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - Project completion percentage updated from 55% to 65%
 
 ---
-
 ## [4.0.0-alpha.4] — 2026-07-17
 
 ### Added
@@ -89,7 +94,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - Project completion percentage updated from 45% to 55%
 
 ---
-
 ## [4.0.0-alpha.3] — 2026-07-15
 
 ### Added
@@ -111,7 +115,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - Documentation updated to include Model Router and Streaming Engine as completed milestones
 
 ---
-
 ## [4.0.0-alpha.2] — 2026-07-14
 
 ### Added
@@ -124,7 +127,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - Performance tracking — model response times, success rates, quality scores per stage/category, persistence to JSON
 
 ---
-
 ## [4.0.0-alpha.1] — 2026-07-14
 
 ### Added
@@ -150,14 +152,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - Removed stray `.git` from home directory
 
 ---
+## [3.2.0] — Steve
 
-## [3.2.0] — Steve v3 (legacy, pre-fork)
-
-The last release of Steve v3. See `C:\Users\areet\Tools` for the v3 codebase.
-
-Key characteristics of v3 (retained for reference):
-- Monolithic → modular refactoring path
-- 6-stage project generation pipeline
-- Keyword-based task classification
-- Hardcoded HTML/CSS/JS section generation
-- Optional Git commands via slash commands
+---

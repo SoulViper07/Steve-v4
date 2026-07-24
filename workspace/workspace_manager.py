@@ -13,6 +13,9 @@ from .change_detector import ChangeDetector, FileChange, CHANGE_ADDED, CHANGE_MO
 from .dependency_graph import FileDependencyGraph
 
 
+WORKSPACE_INTELLIGENCE_VERSION = "1.0.0"
+
+
 class WorkspaceManager:
     def __init__(
         self,
@@ -28,6 +31,7 @@ class WorkspaceManager:
         self._change_detector = ChangeDetector(self._tracker)
         self._dep_graph = FileDependencyGraph()
         self._initialized = False
+        self._scan_history: List[dict] = []
 
     @property
     def resolver(self) -> PathResolver:
@@ -63,6 +67,12 @@ class WorkspaceManager:
         self._sm.set_project(str(self._workdir), tree.flat_list)
         self._change_detector.snapshot()
         self._analyze_dependencies(tree.flat_list)
+        self._scan_history.append({
+            "timestamp": time.time(),
+            "file_count": tree.total_files,
+            "dir_count": tree.total_dirs,
+            "total_size": tree.total_size,
+        })
         return tree
 
     def _analyze_dependencies(self, file_list: List[str]):
@@ -171,6 +181,31 @@ class WorkspaceManager:
 
     def index_stats(self) -> dict:
         return self._tracker.stats()
+
+    def intelligence_report(self) -> dict:
+        stats = self.index_stats()
+        return {
+            "version": WORKSPACE_INTELLIGENCE_VERSION,
+            "workspace": str(self._workdir),
+            "files": stats,
+            "framework": self.detect_framework(),
+            "languages": self.detect_languages(),
+            "config_files": self.detect_config_files(),
+            "dependency_graph_nodes": len(self._dep_graph.all_paths()),
+            "scans_performed": len(self._scan_history),
+            "total_size_kb": round(stats.get("total", 0) * 0.5, 1),
+        }
+
+    def verify_consistency(self) -> List[str]:
+        issues = []
+        for path_str in self._tracker.all_files:
+            abs_path = self._workdir / path_str
+            if not abs_path.exists():
+                issues.append(f"Indexed file missing: {path_str}")
+        for entry in self._tracker.index.values():
+            if entry.generation_status == "generated" and entry.verification_status == "unknown":
+                issues.append(f"Generated file not verified: {entry.path}")
+        return issues
 
     def display_scan_results(self, tree: ProjectTree):
         stats = self._tracker.stats()
